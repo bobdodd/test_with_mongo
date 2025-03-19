@@ -144,17 +144,25 @@ def analyze_common_structure():
 def analyze_domain_structure(domain, structure_data_by_url):
     """Analyze page structure for a specific domain using dedicated structure data"""
     
-    # Analyze header consistency
+    # Analyze primary header consistency
     header_analysis = analyze_component_consistency(
         structure_data_by_url, 
-        lambda data: data.get('keyElements', {}).get('header', {})
+        lambda data: data.get('keyElements', {}).get('primaryHeader', {})
     )
     
-    # Analyze footer consistency
+    # Analyze primary footer consistency
     footer_analysis = analyze_component_consistency(
         structure_data_by_url, 
-        lambda data: data.get('keyElements', {}).get('footer', {})
+        lambda data: data.get('keyElements', {}).get('primaryFooter', {})
     )
+    
+    # Analyze secondary headers
+    secondary_headers_count = sum(1 for data in structure_data_by_url.values() 
+                               if data.get('pageFlags', {}).get('hasSecondaryHeaders', False))
+    
+    # Analyze secondary footers
+    secondary_footers_count = sum(1 for data in structure_data_by_url.values() 
+                               if data.get('pageFlags', {}).get('hasSecondaryFooters', False))
     
     # Analyze navigation consistency
     navigation_analysis = analyze_component_consistency(
@@ -253,6 +261,14 @@ def analyze_domain_structure(domain, structure_data_by_url):
         'page_count': len(structure_data_by_url),
         'header_analysis': header_analysis,
         'footer_analysis': footer_analysis,
+        'secondary_headers': {
+            'count': secondary_headers_count,
+            'presence_ratio': secondary_headers_count / len(structure_data_by_url) if structure_data_by_url else 0
+        },
+        'secondary_footers': {
+            'count': secondary_footers_count,
+            'presence_ratio': secondary_footers_count / len(structure_data_by_url) if structure_data_by_url else 0
+        },
         'navigation_analysis': navigation_analysis,
         'main_content_analysis': main_content_analysis,
         'complementary_analysis': complementary_analysis,
@@ -261,6 +277,20 @@ def analyze_domain_structure(domain, structure_data_by_url):
         'forms_analysis': forms_analysis,
         'complexity_data': complexity_data,
         'interactive_elements': interactive_elements,
+        'content_blocks': {
+            'heroSections': sum(1 for data in structure_data_by_url.values() 
+                             if data.get('pageFlags', {}).get('hasHeroSection', False)),
+            'cardGrids': sum(1 for data in structure_data_by_url.values() 
+                          if data.get('pageFlags', {}).get('hasCardGrids', False)),
+            'featureSections': sum(1 for data in structure_data_by_url.values() 
+                                if data.get('pageFlags', {}).get('hasFeatureSections', False)),
+            'carousels': sum(1 for data in structure_data_by_url.values() 
+                          if data.get('pageFlags', {}).get('hasCarousels', False))
+        },
+        'repetitive_patterns': {
+            'found': sum(1 for data in structure_data_by_url.values() 
+                      if data.get('pageFlags', {}).get('hasRepetitivePatterns', False))
+        },
         'overall_consistency_score': overall_score,
         'sample_pages': sample_pages,
         'analysis_method': 'page_structure'
@@ -693,6 +723,9 @@ def calculate_overall_summary(domain_analyses):
     # Analyze forms across all domains
     forms_analysis = analyze_forms_across_sites(domain_analyses)
     
+    # Analyze content blocks across all domains
+    content_blocks_analysis = analyze_content_blocks_across_sites(domain_analyses)
+    
     return {
         'average_consistency_score': sum(overall_scores) / total_domains if overall_scores else 0,
         'average_header_score': sum(header_scores) / total_domains if header_scores else 0,
@@ -706,6 +739,7 @@ def calculate_overall_summary(domain_analyses):
         'domains_with_consistent_main': domains_with_consistent_main,
         'domains_with_consistent_complementary': domains_with_consistent_complementary,
         'forms_analysis': forms_analysis,
+        'content_blocks_analysis': content_blocks_analysis,
         'total_domains': total_domains
     }
 
@@ -796,6 +830,18 @@ def print_analysis_summary(analysis):
     print(f"Domains with consistent main content: {summary.get('domains_with_consistent_main', 0)} of {summary.get('total_domains', 0)}")
     print(f"Domains with consistent complementary content: {summary.get('domains_with_consistent_complementary', 0)} of {summary.get('total_domains', 0)}")
     
+    # Check for multi-header/footer patterns
+    domains_with_secondary_headers = sum(1 for domain_data in analysis['domain_analyses'].values() 
+                                       if domain_data.get('secondary_headers', {}).get('count', 0) > 0)
+    domains_with_secondary_footers = sum(1 for domain_data in analysis['domain_analyses'].values() 
+                                       if domain_data.get('secondary_footers', {}).get('count', 0) > 0)
+    
+    if domains_with_secondary_headers > 0:
+        print(f"\nSecondary Headers: Found in {domains_with_secondary_headers} domains")
+    
+    if domains_with_secondary_footers > 0:
+        print(f"Secondary Footers: Found in {domains_with_secondary_footers} domains")
+    
     # Forms summary
     forms_analysis = summary.get('forms_analysis', {})
     unique_forms = forms_analysis.get('unique_forms', {})
@@ -807,6 +853,25 @@ def print_analysis_summary(analysis):
         for form_type, forms in sorted(forms_by_type.items(), key=lambda x: len(x[1]), reverse=True):
             print(f"  {form_type.title()}: {len(forms)}")
     
+    # Content blocks summary
+    content_blocks_analysis = summary.get('content_blocks_analysis', {})
+    domains_with_blocks = content_blocks_analysis.get('domains_with_content_blocks', {})
+    
+    if sum(domains_with_blocks.values()) > 0:
+        print("\nCommon content blocks:")
+        if domains_with_blocks.get('heroSections', 0) > 0:
+            print(f"  Hero sections: Found in {domains_with_blocks.get('heroSections', 0)} domains")
+        if domains_with_blocks.get('cardGrids', 0) > 0:
+            print(f"  Card grids: Found in {domains_with_blocks.get('cardGrids', 0)} domains")
+        if domains_with_blocks.get('featureSections', 0) > 0:
+            print(f"  Feature sections: Found in {domains_with_blocks.get('featureSections', 0)} domains")
+        if domains_with_blocks.get('carousels', 0) > 0:
+            print(f"  Carousels/sliders: Found in {domains_with_blocks.get('carousels', 0)} domains")
+        
+        repetitive_patterns = content_blocks_analysis.get('domains_with_repetitive_patterns', 0)
+        if repetitive_patterns > 0:
+            print(f"  Repetitive patterns: Found in {repetitive_patterns} domains")
+    
     # Domain breakdown
     print("\nConsistency scores by domain:")
     domain_analyses = analysis.get('domain_analyses', {})
@@ -816,6 +881,56 @@ def print_analysis_summary(analysis):
         method = domain_analysis.get('analysis_method', 'unknown')
         pages = domain_analysis.get('page_count', 0)
         print(f"{domain}: {score:.1f}% consistency ({pages} pages, {method} analysis)")
+
+def analyze_content_blocks_across_sites(domain_analyses):
+    """
+    Analyze common content blocks across all domains and pages.
+    """
+    domains_with_content_blocks = {
+        'heroSections': 0,
+        'cardGrids': 0,
+        'featureSections': 0,
+        'carousels': 0
+    }
+    
+    domains_with_repetitive_patterns = 0
+    
+    # First pass: count domains with each type of content block
+    for domain, domain_data in domain_analyses.items():
+        content_blocks = domain_data.get('content_blocks', {})
+        if content_blocks:
+            if content_blocks.get('heroSections', 0) > 0:
+                domains_with_content_blocks['heroSections'] += 1
+            if content_blocks.get('cardGrids', 0) > 0:
+                domains_with_content_blocks['cardGrids'] += 1
+            if content_blocks.get('featureSections', 0) > 0:
+                domains_with_content_blocks['featureSections'] += 1
+            if content_blocks.get('carousels', 0) > 0:
+                domains_with_content_blocks['carousels'] += 1
+        
+        # Check for repetitive patterns
+        if domain_data.get('repetitive_patterns', {}).get('found', 0) > 0:
+            domains_with_repetitive_patterns += 1
+    
+    # Calculate percentages
+    total_domains = len(domain_analyses)
+    percentages = {}
+    
+    if total_domains > 0:
+        percentages = {
+            'heroSections': domains_with_content_blocks['heroSections'] / total_domains,
+            'cardGrids': domains_with_content_blocks['cardGrids'] / total_domains,
+            'featureSections': domains_with_content_blocks['featureSections'] / total_domains,
+            'carousels': domains_with_content_blocks['carousels'] / total_domains,
+            'repetitivePatterns': domains_with_repetitive_patterns / total_domains
+        }
+    
+    return {
+        'domains_with_content_blocks': domains_with_content_blocks,
+        'domains_with_repetitive_patterns': domains_with_repetitive_patterns,
+        'percentages': percentages,
+        'total_domains': total_domains
+    }
 
 if __name__ == "__main__":
     analyze_common_structure()

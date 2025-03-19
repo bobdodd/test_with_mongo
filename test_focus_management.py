@@ -1,6 +1,99 @@
 from datetime import datetime
 import asyncio  # Import asyncio for asynchronous sleep
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Focus Management Analysis",
+    "description": "Evaluates if interactive elements have appropriate focus indicators that meet accessibility standards across different responsive breakpoints. This test analyzes CSS rules to identify focus styles and tests whether keyboard users can perceive focus states.",
+    "version": "1.1.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "metadata": "Test metadata including breakpoints tested",
+        "tests": "Results for each focus test type",
+        "cssAnalysis": "Analysis of global CSS focus rules"
+    },
+    "tests": [
+        {
+            "id": "focus_outline_presence",
+            "name": "Focus Outline Presence",
+            "description": "Checks if interactive elements have a visible focus indicator when receiving keyboard focus",
+            "impact": "high",
+            "wcagCriteria": ["2.4.7"],
+            "howToFix": "Add a visible focus indicator to all interactive elements using CSS. This can be done with outline, box-shadow, or border properties in a :focus or :focus-visible selector.",
+            "resultsFields": {
+                "tests.focus_outline_presence.summary.total_violations": "Total elements missing focus indicators",
+                "tests.focus_outline_presence.elements_affected": "List of elements missing focus indicators",
+                "pageFlags.hasMissingOutlines": "Indicates if any elements are missing focus outlines"
+            }
+        },
+        {
+            "id": "focus_outline_offset",
+            "name": "Focus Outline Offset and Width",
+            "description": "Evaluates if focus outlines have sufficient width and offset to be visible",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.11"],
+            "howToFix": "Ensure focus outlines have sufficient width (at least 1px for solid outlines, 3px for dotted/dashed) and offset (at least 2px from element edge) to be clearly visible.",
+            "resultsFields": {
+                "tests.focus_outline_offset.summary.total_violations": "Total elements with insufficient outline offset/width",
+                "tests.focus_outline_offset.elements_affected": "List of elements with insufficient outline properties",
+                "pageFlags.hasInsufficientOutlineOffset": "Indicates if any elements have insufficient outline offset/width"
+            }
+        },
+        {
+            "id": "focus_outline_contrast",
+            "name": "Focus Outline Contrast",
+            "description": "Measures if focus outlines have sufficient contrast against background colors",
+            "impact": "high",
+            "wcagCriteria": ["2.4.11"],
+            "howToFix": "Ensure focus indicators have a contrast ratio of at least 3:1 against adjacent colors. Use high-contrast colors for focus outlines or ensure outline width is at least 2px.",
+            "resultsFields": {
+                "tests.focus_outline_contrast.summary.total_violations": "Total elements with insufficient contrast",
+                "tests.focus_outline_contrast.elements_affected": "List of elements with low contrast focus indicators",
+                "pageFlags.hasInsufficientOutlineContrast": "Indicates if any elements have low contrast focus indicators"
+            }
+        },
+        {
+            "id": "hover_feedback",
+            "name": "Hover Visual Feedback",
+            "description": "Checks if elements provide sufficient visual feedback on hover",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.7"],
+            "howToFix": "Add visual feedback for hover states using CSS :hover selectors. Interactive elements should have a pointer cursor and at least one additional visual change (background color, text color, border, etc.).",
+            "resultsFields": {
+                "tests.hover_feedback.summary.total_violations": "Total elements with insufficient hover feedback",
+                "tests.hover_feedback.elements_affected": "List of elements with missing hover effects"
+            }
+        },
+        {
+            "id": "focus_obscurement",
+            "name": "Focus Outline Obscurement",
+            "description": "Tests if focus outlines are visible and not obscured by other elements",
+            "impact": "high",
+            "wcagCriteria": ["2.4.7"],
+            "howToFix": "Ensure focus outlines are not hidden by other elements. Check for elements with overflow:hidden or negative z-index that may hide focus indicators.",
+            "resultsFields": {
+                "tests.focus_obscurement.summary.total_violations": "Total elements with obscured focus indicators",
+                "tests.focus_obscurement.elements_affected": "List of elements with obscured focus outlines"
+            }
+        },
+        {
+            "id": "anchor_target_tabindex",
+            "name": "Anchor Target Accessibility",
+            "description": "Verifies if in-page link targets are properly configured for keyboard navigation",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.3"],
+            "howToFix": "Add tabindex='-1' to non-interactive elements that are targets of in-page links to ensure they receive focus when navigated to via anchor links.",
+            "resultsFields": {
+                "tests.anchor_target_tabindex.summary.total_violations": "Total in-page targets missing proper tabindex",
+                "tests.anchor_target_tabindex.elements_affected": "List of in-page targets with incorrect tabindex",
+                "pageFlags.hasImproperTargetTabindex": "Indicates if any in-page targets have improper tabindex"
+            }
+        }
+    ]
+}
+
 async def test_focus_management(page):
     """
     Test focus management and interactive element styling at each responsive breakpoint
@@ -85,55 +178,10 @@ async def test_focus_management(page):
     ''')
     print(f"Original viewport: {original_viewport}")
     
-    # Define test documentation to use across all breakpoints
-    test_documentation = {
-        "test_name": "Focus Management Test",
-        "description": "Evaluates if interactive elements have appropriate focus indicators that meet accessibility standards",
-        "wcag_criteria": ["2.4.7 Focus Visible (AA)", "2.4.11 Focus Appearance (AAA)"],
-        "tests_performed": [
-            {
-                "id": "focus_outline_presence",
-                "name": "Focus Outline Presence",
-                "description": "Checks if interactive elements have a visible focus indicator when receiving keyboard focus",
-                "success_criteria": "All interactive elements must have a visible outline when focused"
-            },
-            {
-                "id": "focus_outline_offset",
-                "name": "Focus Outline Offset and Width",
-                "description": "Evaluates if focus outlines have sufficient width and offset to be visible",
-                "success_criteria": "Outline offset should be at least 2px; solid outlines should be at least 1px; dotted/dashed outlines should be at least 3px"
-            },
-            {
-                "id": "focus_outline_contrast",
-                "name": "Focus Outline Contrast",
-                "description": "Measures if focus outlines have sufficient contrast against background colors",
-                "success_criteria": "Focus outlines should have a contrast ratio of at least 3:1 against adjacent colors"
-            },
-            {
-                "id": "hover_feedback",
-                "name": "Hover Visual Feedback",
-                "description": "Checks if elements provide sufficient visual feedback on hover",
-                "success_criteria": "Interactive elements should have a pointer cursor and additional visual changes on hover"
-            },
-            {
-                "id": "focus_obscurement",
-                "name": "Focus Outline Obscurement",
-                "description": "Tests if focus outlines are visible and not obscured by other elements",
-                "success_criteria": "Focus outlines should not be hidden by other elements on the page"
-            },
-            {
-                "id": "anchor_target_tabindex",
-                "name": "Anchor Target Accessibility",
-                "description": "Verifies if in-page link targets are properly configured for keyboard navigation",
-                "success_criteria": "Non-interactive elements targeted by in-page links should have tabindex='-1'"
-            }
-        ]
-    }
-    
     # Initialize results container structured by test type
     results_by_test = {
         "focus_outline_presence": {
-            "test_info": next(test for test in test_documentation["tests_performed"] if test["id"] == "focus_outline_presence"),
+            "test_info": next(test for test in TEST_DOCUMENTATION["tests"] if test["id"] == "focus_outline_presence"),
             "breakpoint_results": [],
             "elements_affected": set(),
             "summary": {
@@ -143,7 +191,7 @@ async def test_focus_management(page):
             }
         },
         "focus_outline_offset": {
-            "test_info": next(test for test in test_documentation["tests_performed"] if test["id"] == "focus_outline_offset"),
+            "test_info": next(test for test in TEST_DOCUMENTATION["tests"] if test["id"] == "focus_outline_offset"),
             "breakpoint_results": [],
             "elements_affected": set(),
             "summary": {
@@ -153,7 +201,7 @@ async def test_focus_management(page):
             }
         },
         "focus_outline_contrast": {
-            "test_info": next(test for test in test_documentation["tests_performed"] if test["id"] == "focus_outline_contrast"),
+            "test_info": next(test for test in TEST_DOCUMENTATION["tests"] if test["id"] == "focus_outline_contrast"),
             "breakpoint_results": [],
             "elements_affected": set(),
             "summary": {
@@ -163,7 +211,7 @@ async def test_focus_management(page):
             }
         },
         "hover_feedback": {
-            "test_info": next(test for test in test_documentation["tests_performed"] if test["id"] == "hover_feedback"),
+            "test_info": next(test for test in TEST_DOCUMENTATION["tests"] if test["id"] == "hover_feedback"),
             "breakpoint_results": [],
             "elements_affected": set(),
             "summary": {
@@ -173,7 +221,7 @@ async def test_focus_management(page):
             }
         },
         "focus_obscurement": {
-            "test_info": next(test for test in test_documentation["tests_performed"] if test["id"] == "focus_obscurement"),
+            "test_info": next(test for test in TEST_DOCUMENTATION["tests"] if test["id"] == "focus_obscurement"),
             "breakpoint_results": [],
             "elements_affected": set(),
             "summary": {
@@ -183,7 +231,7 @@ async def test_focus_management(page):
             }
         },
         "anchor_target_tabindex": {
-            "test_info": next(test for test in test_documentation["tests_performed"] if test["id"] == "anchor_target_tabindex"),
+            "test_info": next(test for test in TEST_DOCUMENTATION["tests"] if test["id"] == "anchor_target_tabindex"),
             "breakpoint_results": [],
             "elements_affected": set(),
             "summary": {
@@ -983,7 +1031,6 @@ async def test_focus_management(page):
         'focus_management': {
             'metadata': testing_metadata,
             'css_analysis': global_css_analysis,
-            'test_documentation': test_documentation,
             'tests': {
                 'focus_outline_presence': results_by_test['focus_outline_presence'],
                 'focus_outline_offset': results_by_test['focus_outline_offset'],
@@ -992,8 +1039,13 @@ async def test_focus_management(page):
                 'focus_obscurement': results_by_test['focus_obscurement'],
                 'anchor_target_tabindex': results_by_test['anchor_target_tabindex']
             },
+            'documentation': TEST_DOCUMENTATION,  # Include the standardized documentation
             'timestamp': datetime.now().isoformat()
         }
     }
+    
+    # Also expose documentation directly at the top level for easier access by report generator
+    if 'focus_management' in final_result:
+        final_result['documentation'] = TEST_DOCUMENTATION
     
     return final_result

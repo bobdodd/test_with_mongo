@@ -1,5 +1,83 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Accessible Names Analysis",
+    "description": "Analyzes all interactive elements for proper accessible names using the W3C accessible name computation algorithm. This test ensures that elements like buttons, links, form controls, and images have appropriate text alternatives for screen reader users.",
+    "version": "1.2.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details": "Detailed information about elements and their accessible names",
+        "details.elements": "List of all visible elements with accessible name information",
+        "details.violations": "List of elements with accessibility name issues",
+        "details.summary": "Summary statistics about accessible names"
+    },
+    "tests": [
+        {
+            "id": "accessible-names-images",
+            "name": "Image Accessible Names",
+            "description": "Checks whether images have appropriate alt text providing meaningful descriptions of the image content.",
+            "impact": "high",
+            "wcagCriteria": ["1.1.1"],
+            "howToFix": "Add concise, meaningful alt text to images that describes their purpose or content. For decorative images, use empty alt text (alt=\"\") to indicate they should be ignored by screen readers.",
+            "resultsFields": {
+                "details.violations": "Elements with missing or improper accessible names",
+                "pageFlags.hasMissingAccessibleNames": "Indicates if any elements are missing proper accessible names"
+            }
+        },
+        {
+            "id": "accessible-names-inputs",
+            "name": "Form Control Labels",
+            "description": "Checks whether form controls like inputs, textareas, and selects have proper labels.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.6", "3.3.2"],
+            "howToFix": "Ensure all form controls have associated labels using either the <label> element with a 'for' attribute matching the input's id, or by wrapping the input with a label element. Alternatively, use aria-label or aria-labelledby attributes.",
+            "resultsFields": {
+                "details.violations": "Form controls with missing labels",
+                "pageFlags.hasMissingAccessibleNames": "Indicates if any form controls are missing proper labels" 
+            }
+        },
+        {
+            "id": "accessible-names-buttons",
+            "name": "Button Accessible Names",
+            "description": "Checks whether buttons have clear, descriptive text that explains their purpose.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.4", "2.4.9"],
+            "howToFix": "Ensure all buttons have meaningful text content that describes their action. For icon buttons without visible text, use aria-label to provide an accessible name.",
+            "resultsFields": {
+                "details.violations": "Buttons with missing accessible names",
+                "pageFlags.hasMissingAccessibleNames": "Indicates if any buttons are missing accessible names"
+            }
+        },
+        {
+            "id": "accessible-names-links",
+            "name": "Link Text Quality",
+            "description": "Checks whether links have descriptive text that explains their purpose or destination.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.4", "2.4.9"],
+            "howToFix": "Ensure all links have meaningful text that describes where the link will take the user. Avoid generic text like 'click here' or 'read more' without additional context.",
+            "resultsFields": {
+                "details.violations": "Links with missing or generic accessible names",
+                "pageFlags.hasMissingAccessibleNames": "Indicates if any links are missing accessible names"
+            }
+        },
+        {
+            "id": "accessible-names-iframe",
+            "name": "IFrame Titles",
+            "description": "Checks whether iframes have title attributes to describe their purpose or content.",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.1"],
+            "howToFix": "Add a descriptive title attribute to all iframes that explains their purpose or content.",
+            "resultsFields": {
+                "details.violations": "IFrames with missing title attributes",
+                "pageFlags.hasMissingAccessibleNames": "Indicates if any iframes are missing titles"
+            }
+        }
+    ]
+}
+
 async def test_accessible_names(page):
     """
     Test accessible names for all visible elements, ensuring they have appropriate labels.
@@ -665,7 +743,8 @@ async def test_accessible_names(page):
             'accessible_names': {
                 'pageFlags': names_data['pageFlags'],
                 'details': names_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -693,6 +772,7 @@ async def test_accessible_names(page):
                         'elementsRequiringNames': 0,
                         'missingNames': 0
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }
