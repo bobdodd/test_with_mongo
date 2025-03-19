@@ -1,6 +1,74 @@
 from datetime import datetime
 import re
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Image Accessibility Analysis",
+    "description": "Evaluates images on the page for proper alternative text and ARIA roles to ensure they are accessible to screen reader users. This test checks for missing alt attributes, invalid alt text content, and proper role attributes for SVG elements.",
+    "version": "1.1.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.images": "List of all images with their properties",
+        "details.violations": "List of images with accessibility violations",
+        "details.summary": "Aggregated statistics about image accessibility"
+    },
+    "tests": [
+        {
+            "id": "image-alt-presence",
+            "name": "Alternative Text Presence",
+            "description": "Checks whether all non-decorative images have an alt attribute providing a text alternative.",
+            "impact": "high",
+            "wcagCriteria": ["1.1.1"],
+            "howToFix": "Add an alt attribute to all meaningful images. For decorative images, use an empty alt attribute (alt='').",
+            "resultsFields": {
+                "pageFlags.hasImagesWithoutAlt": "Indicates if any images are missing alt attributes",
+                "details.summary.missingAlt": "Count of images missing alt attributes",
+                "details.violations": "List of images with missing alt attributes"
+            }
+        },
+        {
+            "id": "image-alt-quality",
+            "name": "Alternative Text Quality",
+            "description": "Evaluates the quality of alternative text to ensure it's meaningful and not just a filename or URL.",
+            "impact": "high",
+            "wcagCriteria": ["1.1.1"],
+            "howToFix": "Ensure alt text is concise, descriptive, and conveys the purpose or content of the image. Avoid using filenames, URLs, or generic text like 'image'.",
+            "resultsFields": {
+                "pageFlags.hasImagesWithInvalidAlt": "Indicates if any images have invalid alt text",
+                "details.summary.invalidAlt": "Count of images with invalid alt text",
+                "details.violations": "List of images with invalid alt text"
+            }
+        },
+        {
+            "id": "svg-role",
+            "name": "SVG Role Attributes",
+            "description": "Checks if SVG elements have proper role attributes for accessibility.",
+            "impact": "medium",
+            "wcagCriteria": ["1.1.1", "4.1.2"],
+            "howToFix": "Add role='img' to non-interactive SVG elements, and provide appropriate text alternatives using aria-label or aria-labelledby.",
+            "resultsFields": {
+                "pageFlags.hasSVGWithoutRole": "Indicates if any SVG elements are missing role attributes",
+                "details.summary.missingRole": "Count of SVG elements missing role attributes",
+                "details.violations": "List of SVG elements with missing role attributes"
+            }
+        },
+        {
+            "id": "decorative-images",
+            "name": "Decorative Image Identification",
+            "description": "Identifies decorative images that use empty alt text to be properly ignored by screen readers.",
+            "impact": "low",
+            "wcagCriteria": ["1.1.1"],
+            "howToFix": "For purely decorative images, use an empty alt attribute (alt='') rather than omitting the attribute entirely.",
+            "resultsFields": {
+                "details.summary.decorativeImages": "Count of decorative images with empty alt text",
+                "details.images": "List of all images with isDecorative property indicating decorative status"
+            }
+        }
+    ]
+}
+
 async def test_images(page):
     """
     Test images for proper alt text and role attributes according to accessibility requirements
@@ -155,7 +223,8 @@ async def test_images(page):
             'images': {
                 'pageFlags': images_data['pageFlags'],
                 'details': images_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -189,6 +258,7 @@ async def test_images(page):
                         'missingRole': 0,
                         'decorativeImages': 0
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }
