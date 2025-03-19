@@ -1,5 +1,96 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Heading Structure Analysis",
+    "description": "Evaluates the document's heading structure to ensure proper hierarchy, positioning, and semantic markup. Properly structured headings are essential for screen reader users to navigate content and understand document organization.",
+    "version": "1.2.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key heading issues",
+        "details.headings": "List of all heading elements with their properties",
+        "details.hierarchy": "Count of headings at each level",
+        "details.violations": "List of heading violations",
+        "details.summary": "Aggregated statistics about heading structure"
+    },
+    "tests": [
+        {
+            "id": "h1-presence",
+            "name": "H1 Presence and Uniqueness",
+            "description": "Checks if the page has exactly one H1 heading that serves as the main title of the page.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.1", "2.4.6"],
+            "howToFix": "Ensure that each page has exactly one H1 element that clearly describes the page content. The H1 should typically be within the main content area.",
+            "resultsFields": {
+                "pageFlags.missingH1": "Indicates if the page is missing an H1 heading",
+                "pageFlags.multipleH1s": "Indicates if the page has more than one H1 heading",
+                "details.summary.h1Count": "Count of H1 headings on the page"
+            }
+        },
+        {
+            "id": "heading-hierarchy",
+            "name": "Heading Hierarchy",
+            "description": "Verifies that headings follow a logical hierarchy without skipping levels (e.g., H1 to H3 without H2).",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.10"],
+            "howToFix": "Ensure headings follow a logical order (H1, H2, H3, etc.) without skipping levels. Each subsection should be under the appropriate parent heading level.",
+            "resultsFields": {
+                "pageFlags.hasHierarchyGaps": "Indicates if the heading structure has gaps in hierarchy",
+                "pageFlags.details.hierarchyGaps": "List of heading levels that were skipped",
+                "details.hierarchy": "Count of headings at each level"
+            }
+        },
+        {
+            "id": "heading-landmark-position",
+            "name": "Heading Landmark Position",
+            "description": "Checks if headings are properly positioned within landmarks, particularly that the main H1 is within the main content area.",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1", "2.4.1"],
+            "howToFix": "Place the primary H1 heading within the main content area. Use appropriate heading levels in other landmarks based on their semantic importance.",
+            "resultsFields": {
+                "pageFlags.hasHeadingsBeforeMain": "Indicates if headings appear before the main content area",
+                "details.summary.headingsBeforeMain": "Count of headings outside the main content area",
+                "details.summary.headingsInMain": "Count of headings inside the main content area"
+            }
+        },
+        {
+            "id": "visual-heading-hierarchy",
+            "name": "Visual Heading Hierarchy",
+            "description": "Evaluates if the visual presentation of headings matches their semantic level (e.g., H2s should not appear larger than H1s).",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "Ensure that the visual styling of headings (font size, weight, etc.) corresponds to their semantic level, with higher-level headings having greater visual prominence.",
+            "resultsFields": {
+                "pageFlags.hasVisualHierarchyIssues": "Indicates if visual styling contradicts semantic hierarchy",
+                "pageFlags.details.visualHierarchyIssues": "List of heading level pairs where visual hierarchy is incorrect"
+            }
+        },
+        {
+            "id": "empty-headings",
+            "name": "Empty Headings",
+            "description": "Identifies headings that have no text content or contain only whitespace.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.6"],
+            "howToFix": "Ensure all heading elements contain descriptive text content. Remove empty headings or replace them with appropriate content.",
+            "resultsFields": {
+                "details.violations": "List of heading violations including empty headings"
+            }
+        },
+        {
+            "id": "heading-accessibility-attributes",
+            "name": "Heading Accessibility Attributes",
+            "description": "Checks for proper ARIA attributes on headings, including correct aria-level on role='heading' elements and tabindex on link targets.",
+            "impact": "medium",
+            "wcagCriteria": ["4.1.2"],
+            "howToFix": "Add aria-level attribute to elements with role='heading'. Add tabindex='-1' to heading elements that are targets of in-page links.",
+            "resultsFields": {
+                "details.violations": "List of heading violations including missing ARIA attributes"
+            }
+        }
+    ]
+}
+
 async def test_headings(page):
     """
     Test heading structure and requirements including:
@@ -268,7 +359,8 @@ async def test_headings(page):
             'headings': {
                 'pageFlags': headings_data['pageFlags'],
                 'details': headings_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -305,6 +397,7 @@ async def test_headings(page):
                         'hierarchyGaps': [],
                         'visualHierarchyIssues': []
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }
