@@ -422,7 +422,8 @@ async def test_colors(page):
             'colors': {
                 'pageFlags': color_data['pageFlags'],
                 'details': color_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -456,6 +457,7 @@ async def test_colors(page):
                         'issue': 'Error evaluating colors',
                         'details': str(e)
                     }]
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

@@ -249,7 +249,8 @@ async def test_animations(page):
             'animations': {
                 'pageFlags': animation_data['pageFlags'],
                 'details': animation_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 

@@ -428,7 +428,8 @@ async def test_forms(page):
             'forms': {
                 'pageFlags': forms_data['pageFlags'],
                 'details': forms_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -468,6 +469,7 @@ async def test_forms(page):
                         'inputsWithLayoutIssues': 0,
                         'inputsWithContrastIssues': 0
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }
