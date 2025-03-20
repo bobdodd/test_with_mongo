@@ -2,6 +2,87 @@ from datetime import datetime
 import traceback
 import asyncio  # Use asyncio for asynchronous sleep
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Floating Dialog Accessibility Analysis",
+    "description": "Evaluates floating dialogs and modal windows for accessibility compliance across responsive breakpoints. This test helps ensure that dialogs are properly structured, keyboard accessible, and don't obscure important content at any screen size.",
+    "version": "2.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "pageFlags": "Boolean flags indicating key dialog accessibility issues",
+        "details": "Full dialog data including structure, positions, and violations",
+        "breakpoints": "Array of viewport widths tested during analysis",
+        "timestamp": "ISO timestamp when the test was run"
+    },
+    "tests": [
+        {
+            "id": "dialog-heading-structure",
+            "name": "Dialog Heading Structure",
+            "description": "Checks if dialogs have proper heading structure, typically starting with a level 2 heading (h2). This helps screen reader users understand the organization and purpose of dialog content.",
+            "impact": "high",
+            "wcagCriteria": ["4.1.2", "2.4.6"],
+            "howToFix": "Ensure each dialog has a prominent heading at level 2 (h2). Use either a semantic h2 element or an element with role='heading' and aria-level='2'.",
+            "resultsFields": {
+                "pageFlags.hasIncorrectHeadings": "Indicates if any dialogs have improper heading structure",
+                "pageFlags.details.incorrectHeadings": "Count of dialogs with incorrect heading levels",
+                "results.violations[].issue": "Details about heading level violations"
+            }
+        },
+        {
+            "id": "dialog-close-button",
+            "name": "Dialog Close Mechanism",
+            "description": "Verifies that dialogs have accessible close buttons that are properly labeled and can be activated by keyboard. Without a clear close mechanism, keyboard-only users may become trapped in dialogs.",
+            "impact": "critical",
+            "wcagCriteria": ["2.1.1", "2.1.2"],
+            "howToFix": "Add a visible, clearly labeled close button to each dialog. The button should have descriptive text or an aria-label like 'Close' or 'Close dialog'. Ensure it can be activated via keyboard (Enter and Space keys).",
+            "resultsFields": {
+                "pageFlags.hasMissingCloseButtons": "Indicates if any dialogs lack proper close buttons",
+                "pageFlags.details.missingCloseButtons": "Count of dialogs without accessible close buttons",
+                "results.dialogs[].content.closeButtonAnalysis": "Detailed analysis of close buttons found"
+            }
+        },
+        {
+            "id": "dialog-focus-management",
+            "name": "Focus Management",
+            "description": "Evaluates whether dialog close mechanisms properly manage keyboard focus, returning it to an appropriate location when the dialog is dismissed. This prevents keyboard users from losing their place in the document.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.3", "2.4.7"],
+            "howToFix": "Implement proper focus management by moving focus to a logical element (usually the element that triggered the dialog or the top of the page) when the dialog closes. Use JavaScript to track and restore focus.",
+            "resultsFields": {
+                "pageFlags.hasImproperFocusManagement": "Indicates if any dialogs have focus management problems",
+                "pageFlags.details.improperFocusManagement": "Count of dialogs with focus management issues",
+                "results.dialogs[].content.closeButtonAnalysis.focusManagement": "Detailed focus management analysis"
+            }
+        },
+        {
+            "id": "dialog-content-obscuring",
+            "name": "Content Obscuring",
+            "description": "Identifies cases where floating dialogs obscure interactive page content, making it inaccessible to users. This is particularly problematic across different viewport sizes in responsive designs.",
+            "impact": "critical",
+            "wcagCriteria": ["2.1.1", "1.4.13"],
+            "howToFix": "Either make dialogs fully modal (capturing all keyboard interaction) or position them to avoid obscuring interactive elements. Test across all responsive breakpoints to ensure proper behavior at all screen sizes.",
+            "resultsFields": {
+                "pageFlags.hasHiddenInteractiveContent": "Indicates if dialogs hide interactive content",
+                "pageFlags.details.hiddenInteractiveElements": "Count of interactive elements obscured by dialogs",
+                "results.dialogs[].overlappingElements.interactive": "List of obscured interactive elements"
+            }
+        },
+        {
+            "id": "dialog-responsive-behavior",
+            "name": "Responsive Dialog Behavior",
+            "description": "Evaluates dialog behavior across multiple viewport sizes to ensure accessibility at all breakpoints. This identifies issues that might only appear on mobile or desktop screen sizes.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.10"],
+            "howToFix": "Test dialogs at all common breakpoints. Ensure dialogs are properly sized and positioned at all viewports. For mobile viewports, dialogs should typically be full-width and have larger tap targets.",
+            "resultsFields": {
+                "breakpoints": "Array of viewport widths tested",
+                "breakpointResults": "Results from each individual breakpoint test",
+                "consolidated.summary.testedBreakpoints": "Number of responsive breakpoints analyzed"
+            }
+        }
+    ]
+}
+
 async def test_floating_dialogs(page):
     """
     Test floating dialogs for proper implementation and content obscuring
@@ -755,7 +836,7 @@ async def test_floating_dialogs(page):
                 'consolidated': consolidated_results,
                 'breakpointResults': all_breakpoint_results,
                 'timestamp': datetime.now().isoformat(),
-                'documentation': generate_documentation()  # Add the documentation
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
         
@@ -804,7 +885,7 @@ async def test_floating_dialogs(page):
                     }],
                     'warnings': []
                 },
-                'documentation': generate_documentation()  # Add documentation even in error case
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }
 
@@ -1085,167 +1166,3 @@ def consolidate_results(breakpoint_results):
             }
         }
 
-def generate_documentation():
-    """
-    Generate comprehensive documentation about the test, methodology, and result fields
-    to make the results self-documenting.
-    """
-    return {
-        "testDescription": {
-            "name": "Floating Dialog Accessibility Test",
-            "version": "2.0",
-            "purpose": "Evaluates floating dialogs and modal windows for accessibility compliance across responsive breakpoints",
-            "capabilities": [
-                "Detects floating dialogs visible on page load",
-                "Tests dialogs across all responsive breakpoints",
-                "Evaluates content hiding and keyboard accessibility issues",
-                "Checks close button focus management",
-                "Identifies proper heading structure",
-                "Validates dialog behaviors against WCAG requirements"
-            ]
-        },
-        "methodology": {
-            "overview": "This test evaluates floating dialogs across multiple viewport sizes to ensure accessibility in responsive designs",
-            "steps": [
-                "Extract CSS breakpoints from stylesheets",
-                "Test each responsive breakpoint",
-                "Identify visible floating dialogs (modal windows, cookie notices, etc.)",
-                "Analyze dialog structure and properties",
-                "Detect content overlap and hidden interactive elements",
-                "Evaluate close button focus management",
-                "Check for proper headings and structure",
-                "Consolidate results across breakpoints"
-            ],
-            "breakpointSelection": "Breakpoints are derived from the page's CSS media queries plus standard device sizes"
-        },
-        "wcagReferences": {
-            "2.4.3": {
-                "level": "A",
-                "title": "Focus Order",
-                "description": "If a webpage can be navigated sequentially and the navigation sequences affect meaning or operation, focusable components receive focus in an order that preserves meaning and operability.",
-                "url": "https://www.w3.org/WAI/WCAG21/Understanding/focus-order.html"
-            },
-            "2.4.7": {
-                "level": "AA",
-                "title": "Focus Visible",
-                "description": "Any keyboard operable user interface has a mode of operation where the keyboard focus indicator is visible.",
-                "url": "https://www.w3.org/WAI/WCAG21/Understanding/focus-visible.html"
-            },
-            "1.4.13": {
-                "level": "AA",
-                "title": "Content on Hover or Focus",
-                "description": "Where receiving and then removing pointer hover or keyboard focus triggers additional content to become visible and then hidden, the following are true.",
-                "url": "https://www.w3.org/WAI/WCAG21/Understanding/content-on-hover-or-focus.html"
-            },
-            "2.1.1": {
-                "level": "A",
-                "title": "Keyboard",
-                "description": "All functionality of the content is operable through a keyboard interface without requiring specific timings for individual keystrokes.",
-                "url": "https://www.w3.org/WAI/WCAG21/Understanding/keyboard.html"
-            },
-            "2.1.2": {
-                "level": "A",
-                "title": "No Keyboard Trap",
-                "description": "If keyboard focus can be moved to a component of the page using a keyboard interface, then focus can be moved away from that component using only a keyboard interface.",
-                "url": "https://www.w3.org/WAI/WCAG21/Understanding/no-keyboard-trap.html"
-            },
-            "4.1.2": {
-                "level": "A",
-                "title": "Name, Role, Value",
-                "description": "For all user interface components, the name and role can be programmatically determined; states, properties, and values can be programmatically set; and notification of changes to these items is available to user agents.",
-                "url": "https://www.w3.org/WAI/WCAG21/Understanding/name-role-value.html"
-            }
-        },
-        "violationTypes": {
-            "incorrectHeadingLevel": {
-                "description": "Dialogs should have a proper heading structure starting with a level 2 heading (h2).",
-                "impact": "Screen reader users rely on heading structure to understand content organization.",
-                "wcagCriteria": ["4.1.2"],
-                "remediation": "Ensure the dialog has a prominent h2 element or an element with role='heading' and aria-level='2'."
-            },
-            "missingCloseButton": {
-                "description": "Dialogs need an accessible close button for keyboard users to dismiss the dialog.",
-                "impact": "Keyboard-only users may become trapped in the dialog with no way to exit.",
-                "wcagCriteria": ["2.1.1", "2.1.2"],
-                "remediation": "Add a visible, clearly labeled close button that can be activated by keyboard."
-            },
-            "improperFocusManagement": {
-                "description": "When a dialog is closed, focus should return to an appropriate element, typically the element that opened the dialog or a logical location in the page.",
-                "impact": "Screen reader and keyboard users may lose their place in the page when dialogs are closed.",
-                "wcagCriteria": ["2.4.3", "2.4.7"],
-                "remediation": "Implement proper focus management by moving focus to a logical element (usually at the top of the page) when the dialog closes."
-            },
-            "hiddenInteractiveContent": {
-                "description": "Interactive elements should not be obscured by floating dialogs as they become inaccessible.",
-                "impact": "Users cannot interact with obscured elements, breaking functionality of the page.",
-                "wcagCriteria": ["2.1.1", "1.4.13"],
-                "remediation": "Ensure dialogs don't overlap interactive elements, or make the dialog modal with proper focus management."
-            }
-        },
-        "warningTypes": {
-            "contentOverlap": {
-                "description": "Dialogs overlap with non-interactive page content.",
-                "impact": "Visual content may be hidden from users, though functionality is not affected.",
-                "remediation": "Implement modal dialogs that separate dialog content from page content, or position floating elements to minimize content overlap."
-            }
-        },
-        "fieldDefinitions": {
-            "breakpoints": "Array of viewport widths (in pixels) tested during the analysis",
-            "consolidated": {
-                "description": "Aggregated results across all tested breakpoints",
-                "summary": {
-                    "testedBreakpoints": "Number of responsive breakpoints tested",
-                    "uniqueDialogs": "Number of distinct floating dialogs found on the page",
-                    "totalIssues": "Total number of accessibility issues found",
-                    "criticalIssues": "Number of critical severity issues that directly impact usability",
-                    "moderateIssues": "Number of moderate severity issues that may affect some users"
-                },
-                "issuesByType": "Issues organized by type and severity with affected elements"
-            },
-            "closeButtonAnalysis": {
-                "description": "Analysis of dialog close buttons and their focus management",
-                "fields": {
-                    "hasCloseButton": "Whether a close button was found in the dialog",
-                    "closeButtons": "List of close buttons with their properties",
-                    "focusManagement": {
-                        "description": "Analysis of where focus moves when the dialog closes",
-                        "fields": {
-                            "analyzed": "Whether focus management could be analyzed",
-                            "hasEventListeners": "Whether the button has detectable event handlers",
-                            "willMoveFocus": "Whether focus will likely move when the dialog closes",
-                            "targetIsValid": "Whether the focus target is a valid accessible element",
-                            "focusViolation": "Whether a focus management violation was detected",
-                            "violationReason": "Description of the focus management issue",
-                            "potentialFocusTargets": "Potential elements that could receive focus"
-                        }
-                    }
-                }
-            },
-            "dialogHasFocusTrap": {
-                "description": "Analysis of whether the dialog implements a focus trap",
-                "fields": {
-                    "hasAriaModal": "Whether the dialog has aria-modal='true'",
-                    "hasCommonTrapClasses": "Whether the dialog has classes that suggest a focus trap",
-                    "hasTrapElements": "Whether the dialog has elements that implement a focus trap",
-                    "likelyHasFocusTrap": "Whether the dialog likely implements a focus trap based on the above"
-                }
-            }
-        },
-        "bestPractices": {
-            "dialogImplementation": [
-                "Use native <dialog> element or add role='dialog' or role='alertdialog'",
-                "Include aria-modal='true' for modal dialogs",
-                "Start dialog content with a heading level 2 (h2)",
-                "Provide a visible close button with clear labeling",
-                "Implement a focus trap for modal dialogs",
-                "Return focus to the triggering element or logical location when closed",
-                "Ensure all dialog content is accessible via keyboard navigation"
-            ],
-            "focusManagement": [
-                "When a dialog closes, focus should move to a logical location",
-                "For dialogs present on page load, focus should move to the top of the page when closed",
-                "Use tabindex='-1' on non-interactive elements that need to receive focus",
-                "Ensure the focus target is visible and within the viewport"
-            ]
-        }
-    }
