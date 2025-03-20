@@ -1,5 +1,98 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Color and Contrast Analysis",
+    "description": "Evaluates color usage and contrast ratios on the page to ensure content is perceivable by users with low vision, color vision deficiencies, or those who use high contrast modes. This test examines text contrast, color-only distinctions, non-text contrast, color references, and adjacent element contrast.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "pageFlags": "Boolean flags indicating key color and contrast issues",
+        "details": "Full color data including contrast measurements and violations",
+        "timestamp": "ISO timestamp when the test was run"
+    },
+    "tests": [
+        {
+            "id": "color-text-contrast",
+            "name": "Text Contrast Ratio",
+            "description": "Evaluates the contrast ratio between text color and its background to ensure readability. Normal text should have a contrast ratio of at least 4.5:1, while large text should have a ratio of at least 3:1.",
+            "impact": "high",
+            "wcagCriteria": ["1.4.3", "1.4.6"],
+            "howToFix": "Increase the contrast between text and background colors. Options include:\n1. Darkening the text color (for light backgrounds)\n2. Lightening the text color (for dark backgrounds)\n3. Changing the background color to increase contrast\n4. Using a contrast checker tool to verify ratios meet WCAG standards",
+            "resultsFields": {
+                "pageFlags.hasContrastIssues": "Indicates if any text has insufficient contrast",
+                "pageFlags.details.contrastViolations": "Count of text elements with contrast issues",
+                "details.textContrast.violations": "Detailed information about each contrast violation"
+            }
+        },
+        {
+            "id": "color-only-distinction",
+            "name": "Color-Only Distinctions",
+            "description": "Identifies cases where color alone is used to convey information, particularly for links that are distinguished only by color without additional visual cues.",
+            "impact": "high",
+            "wcagCriteria": ["1.4.1"],
+            "howToFix": "Add non-color distinctions to links and interactive elements:\n1. Add underlines to links\n2. Use icons or symbols alongside color\n3. Apply text styles like bold or italic\n4. Add borders or background changes on hover/focus",
+            "resultsFields": {
+                "pageFlags.hasColorOnlyLinks": "Indicates if links are distinguished only by color",
+                "pageFlags.details.colorOnlyLinks": "Count of links with color-only distinction",
+                "details.links.violations": "List of links that rely solely on color"
+            }
+        },
+        {
+            "id": "color-non-text-contrast",
+            "name": "Non-Text Contrast",
+            "description": "Evaluates contrast for UI components and graphical objects to ensure they're perceivable by users with low vision.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.11"],
+            "howToFix": "Ensure UI components (buttons, form controls, focus indicators) and graphics required for understanding have a contrast ratio of at least 3:1 against adjacent colors.",
+            "resultsFields": {
+                "pageFlags.hasNonTextContrastIssues": "Indicates if non-text elements have contrast issues",
+                "pageFlags.details.nonTextContrastViolations": "Count of non-text contrast violations",
+                "details.nonText.violations": "List of non-text elements with contrast issues"
+            }
+        },
+        {
+            "id": "color-references",
+            "name": "Color References in Content",
+            "description": "Identifies text that refers to color as the only means of conveying information, which can be problematic for users with color vision deficiencies.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.1"],
+            "howToFix": "Supplement color references with additional descriptors:\n1. Use patterns, shapes, or labels in addition to color\n2. Add text that doesn't rely on perceiving color\n3. Use 'located at [position]' instead of 'in red'",
+            "resultsFields": {
+                "pageFlags.hasColorReferences": "Indicates if content references color as an identifier",
+                "pageFlags.details.colorReferences": "Count of color references in text",
+                "details.colorReferences.instances": "Text fragments containing color references"
+            }
+        },
+        {
+            "id": "color-adjacent-contrast",
+            "name": "Adjacent Element Contrast",
+            "description": "Examines contrast between adjacent UI elements to ensure boundaries are perceivable.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.11"],
+            "howToFix": "Increase contrast between adjacent elements by:\n1. Adding borders between sections\n2. Increasing the color difference between adjacent elements\n3. Adding visual separators like lines or spacing",
+            "resultsFields": {
+                "pageFlags.hasAdjacentContrastIssues": "Indicates if adjacent elements lack sufficient contrast",
+                "pageFlags.details.adjacentContrastViolations": "Count of adjacent contrast violations",
+                "details.adjacentDivs.violations": "List of adjacent elements with insufficient contrast"
+            }
+        },
+        {
+            "id": "color-media-queries",
+            "name": "Contrast and Color Scheme Preferences",
+            "description": "Checks if the page respects user preferences for increased contrast and color schemes through media queries.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.12"],
+            "howToFix": "Implement media queries to support user preferences:\n@media (prefers-contrast: more) { /* high contrast styles */ }\n@media (prefers-color-scheme: dark) { /* dark mode styles */ }",
+            "resultsFields": {
+                "pageFlags.supportsContrastPreferences": "Indicates if prefers-contrast media query is used",
+                "pageFlags.supportsColorSchemePreferences": "Indicates if prefers-color-scheme media query is used",
+                "details.mediaQueries": "Details about detected media queries"
+            }
+        }
+    ]
+}
+
 async def test_colors(page):
     """
     Test color usage and contrast requirements across the page
