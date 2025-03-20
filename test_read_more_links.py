@@ -1,5 +1,60 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Generic Link Text Analysis",
+    "description": "Evaluates links and buttons with generic text like 'Read more' or 'Click here' for proper accessibility. This test identifies elements with non-descriptive text that lack proper accessible names to provide context for screen reader users.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.items": "List of generic links with their properties",
+        "details.violations": "List of accessibility violations in generic links",
+        "details.summary": "Aggregated statistics about generic link usage"
+    },
+    "tests": [
+        {
+            "id": "generic-link-detection",
+            "name": "Generic Link Text Detection",
+            "description": "Identifies links and buttons with non-descriptive text like 'Read more', 'Learn more', 'Click here', etc.",
+            "impact": "informational",
+            "wcagCriteria": ["2.4.4", "2.4.9"],
+            "howToFix": "This test is informational and identifies generic links that may need enhanced accessible names.",
+            "resultsFields": {
+                "pageFlags.hasGenericReadMoreLinks": "Indicates if generic link text is present",
+                "pageFlags.details.totalGenericLinks": "Count of links with generic text",
+                "details.items": "List of elements with generic text"
+            }
+        },
+        {
+            "id": "accessible-name-quality",
+            "name": "Generic Link Accessible Name",
+            "description": "Checks if links with generic visible text have proper accessible names that provide additional context.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.4", "2.4.9"],
+            "howToFix": "Add an aria-label attribute to generic links that starts with the visible text and adds descriptive context (e.g., a link with visible text 'Read more' might have aria-label='Read more about our accessibility policy').",
+            "resultsFields": {
+                "pageFlags.hasInvalidReadMoreLinks": "Indicates if links with generic text lack proper accessible names",
+                "pageFlags.details.violationsCount": "Count of links with invalid accessible names",
+                "details.violations": "List of generic links with invalid accessible names"
+            }
+        },
+        {
+            "id": "accessible-name-pattern",
+            "name": "Accessible Name Pattern",
+            "description": "Verifies that accessible names for generic links follow the pattern of starting with the visible text.",
+            "impact": "medium",
+            "wcagCriteria": ["2.5.3"],
+            "howToFix": "Ensure the accessible name (via aria-label) begins with the same text that is visibly displayed on the link, then adds additional context.",
+            "resultsFields": {
+                "details.items[].isValid": "Boolean indicating if a specific link follows the proper accessible name pattern",
+                "details.violations": "List of links with pattern violations"
+            }
+        }
+    ]
+}
+
 async def test_read_more_links(page):
     """
     Test 'read more' type links and buttons for proper accessible names
@@ -117,7 +172,8 @@ async def test_read_more_links(page):
             'read_more_links': {
                 'pageFlags': read_more_data['pageFlags'],
                 'details': read_more_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -144,6 +200,7 @@ async def test_read_more_links(page):
                         'totalGenericLinks': 0,
                         'violationsCount': 0
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

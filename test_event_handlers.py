@@ -1,5 +1,103 @@
 from datetime import datetime
 
+# Test documentation with information about the event handler tests
+TEST_DOCUMENTATION = {
+    "testName": "Event Handler Accessibility Tests",
+    "description": "Analyzes page for event handling accessibility issues and keyboard navigation patterns. Checks for proper implementation of keyboard access for interactive elements, correct tab order, and escape key functionality for modal dialogs.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "pageFlags": "Top-level flags indicating presence of various issues",
+        "details": "Detailed information about event handlers and tab order",
+        "events.handlers": "All event handlers categorized by type (mouse, keyboard, etc.)",
+        "events.violations": "Elements with accessibility violations in their event handling",
+        "tabOrder.tabOrder": "All focusable elements in their tab sequence",
+        "tabOrder.violations": "Tab order sequence violations",
+        "violationCounts": "Summary counts of each type of violation",
+        "violationFlags": "Boolean flags for each violation category"
+    },
+    "tests": [
+        {
+            "id": "missing-tabindex",
+            "name": "Non-interactive Elements with Event Handlers Missing Tabindex",
+            "description": "Tests for non-interactive elements (div, span, etc.) that have event handlers but no tabindex attribute. These elements must have tabindex to be keyboard accessible.",
+            "impact": "critical",
+            "wcagCriteria": ["2.1.1", "2.1.3"],
+            "howToFix": "Add tabindex='0' to any non-interactive element that has event handlers",
+            "resultsFields": {
+                "pageFlags.hasMissingTabindex": "Boolean flag indicating if issue was found",
+                "details.violationCounts.missing-tabindex": "Number of elements with this issue",
+                "details.events.violations": "Array of specific elements with this violation"
+            }
+        },
+        {
+            "id": "mouse-only",
+            "name": "Elements with Mouse Events but no Keyboard Events",
+            "description": "Identifies elements that respond to mouse events (click, hover) but have no keyboard event handlers, making them inaccessible to keyboard users",
+            "impact": "high",
+            "wcagCriteria": ["2.1.1", "2.1.3"],
+            "howToFix": "Add keyboard event handlers (keydown, keypress) to elements that have mouse handlers",
+            "resultsFields": {
+                "pageFlags.hasMouseOnlyHandlers": "Boolean flag indicating if issue was found",
+                "details.violationCounts.mouse-only": "Number of elements with this issue",
+                "details.events.summary.mouseOnlyElements": "Information about mouse-only interactive elements"
+            }
+        },
+        {
+            "id": "modal-without-escape",
+            "name": "Modal Dialogs without Keyboard Escape",
+            "description": "Checks if modal dialogs provide keyboard escape functionality (ESC key)",
+            "impact": "high",
+            "wcagCriteria": ["2.1.2"],
+            "howToFix": "Add a keydown event handler to modal dialogs that closes them on Escape key",
+            "resultsFields": {
+                "pageFlags.hasModalsWithoutEscape": "Boolean flag indicating if issue was found",
+                "details.violationCounts.modal-without-escape": "Number of modals with this issue",
+                "details.events.summary.modalEscapeSupport": "Information about modals and their escape key support"
+            }
+        },
+        {
+            "id": "visual-order",
+            "name": "Tab Order Doesn't Follow Visual Layout",
+            "description": "Checks if the tab order of interactive elements follows their visual arrangement",
+            "impact": "medium", 
+            "wcagCriteria": ["2.4.3"],
+            "howToFix": "Rearrange DOM order or use tabindex to ensure tab order matches visual layout",
+            "resultsFields": {
+                "pageFlags.hasVisualOrderViolations": "Boolean flag indicating if issue was found",
+                "details.violationCounts.visual-order": "Number of tab order violations",
+                "details.tabOrder.violations": "Specific information about tab order violation pairs"
+            }
+        },
+        {
+            "id": "negative-tabindex",
+            "name": "Elements with Negative Tabindex",
+            "description": "Identifies elements using negative tabindex which removes them from the natural tab order but keeps them focusable programmatically",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.3"],
+            "howToFix": "Replace negative tabindex with tabindex='0' for elements that should be in the normal tab sequence",
+            "resultsFields": {
+                "pageFlags.hasNegativeTabindex": "Boolean flag indicating if issue was found",
+                "details.violationCounts.negative-tabindex": "Number of elements using negative tabindex",
+                "details.tabOrder.summary.elementsWithExplicitTabIndex": "Count of elements with explicit tabindex"
+            }
+        },
+        {
+            "id": "high-tabindex",
+            "name": "Elements with Unusually High Tabindex",
+            "description": "Identifies elements with tabindex values > 10, which is a poor practice that can create maintenance issues",
+            "impact": "low",
+            "wcagCriteria": ["2.4.3"],
+            "howToFix": "Restructure DOM or use smaller sequential tabindex values (preferably 0)",
+            "resultsFields": {
+                "pageFlags.hasHighTabindex": "Boolean flag indicating if issue was found",
+                "details.violationCounts.high-tabindex": "Number of elements with high tabindex values",
+                "details.tabOrder.summary.elementsWithExplicitTabIndex": "Count of elements with explicit tabindex"
+            }
+        }
+    ]
+}
+
 async def test_event_handlers(page):
     """
     Test event handlers and tab order accessibility requirements
@@ -391,119 +489,7 @@ async def test_event_handlers(page):
                     }
                 }
 
-                function generateTestDocumentation() {
-                    // Documentation of all the tests performed and data fields
-                    return {
-                        testName: "Event Handler Accessibility Tests",
-                        version: "1.0",
-                        description: "Analyzes page for event handling accessibility issues and keyboard navigation patterns",
-                        date: new Date().toISOString(),
-                        tests: [
-                            {
-                                id: "missing-tabindex",
-                                name: "Non-interactive elements with event handlers missing tabindex",
-                                description: "Tests for non-interactive elements (div, span, etc.) that have event handlers but no tabindex attribute. These elements must have tabindex to be keyboard accessible.",
-                                wcagCriteria: ["2.1.1", "2.1.3"],
-                                impact: "Critical - Elements without proper keyboard accessibility cannot be used by keyboard-only users",
-                                howToFix: "Add tabindex='0' to any non-interactive element that has event handlers",
-                                resultsFields: {
-                                    "pageFlags.hasMissingTabindex": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.missing-tabindex": "Number of elements with this issue",
-                                    "details.events.violations": "Array of specific elements with this violation"
-                                }
-                            },
-                            {
-                                id: "mouse-only",
-                                name: "Elements with mouse events but no keyboard events",
-                                description: "Identifies elements that respond to mouse events (click, hover) but have no keyboard event handlers, making them inaccessible to keyboard users",
-                                wcagCriteria: ["2.1.1", "2.1.3"],
-                                impact: "High - Functionality available only with mouse prevents keyboard-only users from using features",
-                                howToFix: "Add keyboard event handlers (keydown, keypress) to elements that have mouse handlers",
-                                resultsFields: {
-                                    "pageFlags.hasMouseOnlyHandlers": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.mouse-only": "Number of elements with this issue",
-                                    "details.events.summary.mouseOnlyElements": "Information about mouse-only interactive elements"
-                                }
-                            },
-                            {
-                                id: "modal-without-escape",
-                                name: "Modal dialogs without keyboard escape",
-                                description: "Checks if modal dialogs provide keyboard escape functionality (ESC key)",
-                                wcagCriteria: ["2.1.2"],
-                                impact: "High - Users may become trapped in modal dialogs without keyboard dismissal option",
-                                howToFix: "Add a keydown event handler to modal dialogs that closes them on Escape key",
-                                resultsFields: {
-                                    "pageFlags.hasModalsWithoutEscape": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.modal-without-escape": "Number of modals with this issue",
-                                    "details.events.summary.modalEscapeSupport": "Information about modals and their escape key support"
-                                }
-                            },
-                            {
-                                id: "visual-order",
-                                name: "Tab order doesn't follow visual left-to-right order",
-                                description: "Checks if the tab order of interactive elements follows their visual left-to-right arrangement",
-                                wcagCriteria: ["2.4.3"],
-                                impact: "Medium - Unpredictable tab order creates confusion for keyboard users",
-                                howToFix: "Rearrange DOM order or use tabindex to ensure tab order matches visual layout",
-                                resultsFields: {
-                                    "pageFlags.hasVisualOrderViolations": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.visual-order": "Number of tab order violations",
-                                    "details.tabOrder.violations": "Specific information about tab order violation pairs"
-                                }
-                            },
-                            {
-                                id: "column-order",
-                                name: "Tab order doesn't follow visual column order",
-                                description: "Checks if tab order follows the expected column-based navigation pattern",
-                                wcagCriteria: ["2.4.3"],
-                                impact: "Medium - Unpredictable tab order between columns creates confusion for keyboard users",
-                                howToFix: "Adjust DOM order or use tabindex to ensure proper column-based navigation",
-                                resultsFields: {
-                                    "pageFlags.hasColumnOrderViolations": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.column-order": "Number of elements with column order issues",
-                                    "details.tabOrder.violations": "Specific information about column order violations"
-                                }
-                            },
-                            {
-                                id: "negative-tabindex",
-                                name: "Elements with negative tabindex",
-                                description: "Identifies elements using negative tabindex which removes them from the natural tab order but keeps them focusable programmatically",
-                                wcagCriteria: ["2.4.3"],
-                                impact: "Medium - Can create accessibility issues if important interactive elements are removed from tab order",
-                                howToFix: "Replace negative tabindex with tabindex='0' for elements that should be in the normal tab sequence",
-                                resultsFields: {
-                                    "pageFlags.hasNegativeTabindex": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.negative-tabindex": "Number of elements using negative tabindex",
-                                    "details.tabOrder.summary.elementsWithExplicitTabIndex": "Count of elements with explicit tabindex"
-                                }
-                            },
-                            {
-                                id: "high-tabindex",
-                                name: "Elements with unusually high tabindex",
-                                description: "Identifies elements with tabindex values > 10, which is a poor practice that can create maintenance issues",
-                                wcagCriteria: ["2.4.3"],
-                                impact: "Low - High tabindex values make tab order harder to manage and maintain",
-                                howToFix: "Restructure DOM or use smaller sequential tabindex values (preferably 0)",
-                                resultsFields: {
-                                    "pageFlags.hasHighTabindex": "Boolean flag indicating if issue was found",
-                                    "details.violationCounts.high-tabindex": "Number of elements with high tabindex values",
-                                    "details.tabOrder.summary.elementsWithExplicitTabIndex": "Count of elements with explicit tabindex"
-                                }
-                            }
-                        ],
-                        dataSchema: {
-                            "pageFlags": "Top-level flags indicating presence of various issues",
-                            "details": "Detailed information about event handlers and tab order",
-                            "details.events.handlers": "All event handlers categorized by type (mouse, keyboard, etc.)",
-                            "details.events.violations": "Elements with accessibility violations in their event handling",
-                            "details.tabOrder.tabOrder": "All focusable elements in their tab sequence",
-                            "details.tabOrder.violations": "Tab order sequence violations",
-                            "details.violationCounts": "Summary counts of each type of violation",
-                            "details.violationFlags": "Boolean flags for each violation category",
-                            "timestamp": "When the test was conducted"
-                        }
-                    };
-                }
+                // Documentation is now defined at the module level as TEST_DOCUMENTATION
 
                 const eventResults = findEventHandlers()
                 const tabOrderResults = analyzeTabOrder()
@@ -539,9 +525,6 @@ async def test_event_handlers(page):
                     }
                 };
                 
-                // Generate test documentation to include with results
-                const documentation = generateTestDocumentation();
-
                 return {
                     pageFlags: {
                         hasEventHandlers: eventResults.summary.totalHandlers > 0,
@@ -579,8 +562,7 @@ async def test_event_handlers(page):
                     results: {
                         events: eventResults,
                         tabOrder: tabOrderResults
-                    },
-                    documentation: documentation
+                    }
                 }
             }
         ''')
@@ -589,7 +571,7 @@ async def test_event_handlers(page):
             'events': {
                 'pageFlags': event_data['pageFlags'],
                 'details': event_data['results'],
-                'documentation': event_data['documentation'],
+                'documentation': TEST_DOCUMENTATION,
                 'timestamp': datetime.now().isoformat()
             }
         }
@@ -683,11 +665,6 @@ async def test_event_handlers(page):
                         'details': str(e)
                     }]
                 },
-                'documentation': {
-                    'testName': 'Event Handler Accessibility Tests',
-                    'version': '1.0',
-                    'description': 'Analyzes page for event handling accessibility issues and keyboard navigation patterns',
-                    'error': str(e)
-                }
+                'documentation': TEST_DOCUMENTATION
             }
         }

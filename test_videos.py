@@ -1,6 +1,72 @@
 from datetime import datetime
 import re
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Video Accessibility Analysis",
+    "description": "Evaluates the presence and accessibility of video elements on the page, including native HTML5 videos and embedded players from services like YouTube and Vimeo. This test specifically checks for required title attributes on iframe-embedded videos.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.videos": "List of all videos with their properties",
+        "details.violations": "List of video accessibility violations",
+        "details.summary": "Aggregated statistics about videos"
+    },
+    "tests": [
+        {
+            "id": "iframe-title",
+            "name": "Iframe Title Attribute",
+            "description": "Checks if embedded videos using iframes have title attributes that describe their content.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.1", "4.1.2"],
+            "howToFix": "Add a descriptive title attribute to all iframe elements that embed videos, clearly describing the video content (e.g., title='Introduction to Our Company').",
+            "resultsFields": {
+                "pageFlags.hasIframesWithoutTitles": "Indicates if any video iframes are missing title attributes",
+                "pageFlags.details.iframesWithoutTitles": "Count of iframes missing title attributes",
+                "details.violations": "List of violations including iframes without titles"
+            }
+        },
+        {
+            "id": "video-identification",
+            "name": "Video Identification",
+            "description": "Identifies all video content on the page, including native HTML5 videos and common embedded players.",
+            "impact": "informational",
+            "wcagCriteria": ["1.2.1", "1.2.2", "1.2.3", "1.2.5"],
+            "howToFix": "This test is informational only and identifies videos that may need captions, audio descriptions, or transcripts to meet accessibility requirements.",
+            "resultsFields": {
+                "pageFlags.hasVideos": "Indicates if the page contains videos",
+                "pageFlags.details.totalVideos": "Count of videos found on the page",
+                "pageFlags.details.videoTypes": "Breakdown of video types (YouTube, Vimeo, native, etc.)",
+                "details.videos": "List of all videos with their properties"
+            }
+        },
+        {
+            "id": "native-video-controls",
+            "name": "Native Video Controls",
+            "description": "Checks if native HTML5 video elements have controls attribute enabled.",
+            "impact": "high",
+            "wcagCriteria": ["2.1.1"],
+            "howToFix": "Add the 'controls' attribute to all <video> elements to ensure keyboard users can operate the video player.",
+            "resultsFields": {
+                "details.videos": "List of videos including information about controls"
+            }
+        },
+        {
+            "id": "video-player-accessibility",
+            "name": "Video Player Accessibility",
+            "description": "Evaluates if video players have accessible controls and attributes.",
+            "impact": "high",
+            "wcagCriteria": ["1.2.1", "1.2.2", "2.1.1"],
+            "howToFix": "Ensure video players have proper ARIA labels, keyboard-accessible controls, and support for captions and transcripts.",
+            "resultsFields": {
+                "details.videos": "List of videos with their attribute information"
+            }
+        }
+    ]
+}
+
 async def test_videos(page):
     """
     Test for presence of videos, including native video elements and embedded players.
@@ -142,7 +208,8 @@ async def test_videos(page):
             'videos': {
                 'pageFlags': video_data['pageFlags'],
                 'details': video_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -168,6 +235,7 @@ async def test_videos(page):
                         'byType': {},
                         'iframesWithoutTitles': 0
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

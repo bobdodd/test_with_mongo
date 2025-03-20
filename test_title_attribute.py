@@ -1,5 +1,32 @@
 from datetime import datetime
 
+# Test documentation with information about the title attribute test
+TEST_DOCUMENTATION = {
+    "testName": "Title Attribute Test",
+    "description": "Tests for proper usage of the title attribute on HTML elements. According to accessibility guidelines, the title attribute should primarily be used on iframe elements to provide descriptive labels. Using title attributes on other elements can create issues for screen reader users and is generally not recommended.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "pageFlags": "Boolean flags indicating the presence of accessibility issues",
+        "details": "Detailed information about the test results"
+    },
+    "tests": [
+        {
+            "id": "title-attribute-usage",
+            "name": "Title Attribute Usage",
+            "description": "Checks if title attributes are used properly (only on iframe elements)",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.1", "2.4.2", "4.1.2"],
+            "howToFix": "Remove title attributes from non-iframe elements. For elements like links, buttons, and controls, use properly associated text labels, aria-label, or aria-labelledby instead. For iframes, use the title attribute to provide a descriptive label for the frame content.",
+            "resultsFields": {
+                "improperUse": "List of elements with improperly used title attributes",
+                "properUse": "List of elements with properly used title attributes (iframes)",
+                "violations": "Detailed descriptions of each title attribute violation"
+            }
+        }
+    ]
+}
+
 async def test_title_attribute(page):
     """
     Test proper usage of title attribute - should only be used on iframes
@@ -75,7 +102,8 @@ async def test_title_attribute(page):
             'titleAttribute': {
                 'pageFlags': title_data['pageFlags'],
                 'details': title_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION
             }
         }
 
@@ -99,6 +127,7 @@ async def test_title_attribute(page):
                         'issue': 'Error evaluating title attributes',
                         'details': str(e)
                     }]
-                }
+                },
+                'documentation': TEST_DOCUMENTATION
             }
         }

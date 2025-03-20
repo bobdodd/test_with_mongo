@@ -1,5 +1,85 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Font Accessibility Analysis",
+    "description": "Evaluates webpage font usage and typography for accessibility concerns, including font size, line height, and text alignment. This test identifies small text, insufficient line spacing, and other typographic issues that may impact readability for users with visual impairments.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "font_analysis.fonts": "Dictionary of font families used with their properties",
+        "font_analysis.totalFonts": "Count of unique font families used on the page",
+        "font_analysis.accessibility.tests": "Test results for specific font accessibility issues",
+        "font_analysis.accessibility.violations": "Lists of text elements with accessibility issues"
+    },
+    "tests": [
+        {
+            "id": "small-text",
+            "name": "Small Text Size",
+            "description": "Identifies text with font size smaller than 16px that may be difficult to read.",
+            "impact": "high",
+            "wcagCriteria": ["1.4.4"],
+            "howToFix": "Ensure all body text is at least 16px (1rem) in size. If using relative units, make sure they resolve to at least 16px at standard zoom levels.",
+            "resultsFields": {
+                "font_analysis.accessibility.tests.hasSmallText": "Indicates if small text is present",
+                "font_analysis.accessibility.tests.violations.smallText": "List of text elements with small font sizes"
+            }
+        },
+        {
+            "id": "line-height",
+            "name": "Insufficient Line Height",
+            "description": "Checks if line height is adequate for readability (at least 1.5 times the font size).",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.8"],
+            "howToFix": "Set line-height to at least 1.5 for paragraph text to improve readability and accommodate users who need more spacing between lines.",
+            "resultsFields": {
+                "font_analysis.accessibility.tests.hasSmallLineHeight": "Indicates if insufficient line height is present",
+                "font_analysis.accessibility.tests.violations.smallLineHeight": "List of text elements with insufficient line spacing"
+            }
+        },
+        {
+            "id": "italic-text",
+            "name": "Excessive Italic Text",
+            "description": "Identifies usage of italic text that may be difficult to read for some users.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.8"],
+            "howToFix": "Limit the use of italic text, especially for longer passages. Consider using alternative styling for emphasis.",
+            "resultsFields": {
+                "font_analysis.accessibility.tests.hasItalicText": "Indicates if italic text is present",
+                "font_analysis.accessibility.tests.violations.italicText": "List of text elements with italic styling"
+            }
+        },
+        {
+            "id": "text-alignment",
+            "name": "Text Alignment Issues",
+            "description": "Checks for justified or right-aligned text that may create readability problems.",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.8"],
+            "howToFix": "Avoid fully justified text which creates uneven spacing between words. Use left-aligned text (or right-aligned for RTL languages) instead of centered or right-aligned text for longer passages.",
+            "resultsFields": {
+                "font_analysis.accessibility.tests.hasJustifiedText": "Indicates if justified text is present",
+                "font_analysis.accessibility.tests.hasRightAlignedText": "Indicates if right-aligned text is present",
+                "font_analysis.accessibility.tests.violations.justifiedText": "List of elements with justified text",
+                "font_analysis.accessibility.tests.violations.rightAlignedText": "List of elements with right-aligned text"
+            }
+        },
+        {
+            "id": "visual-hierarchy",
+            "name": "Visual Hierarchy Issues",
+            "description": "Identifies cases where non-heading text appears more prominent than actual headings.",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "Maintain a clear visual hierarchy where headings are visually more prominent than non-heading text. Don't use large, bold text as a substitute for proper heading elements.",
+            "resultsFields": {
+                "font_analysis.accessibility.tests.hasBoldNonHeadingLargerThanHeadings": "Indicates if bold non-heading text larger than headings is present",
+                "font_analysis.accessibility.tests.violations.boldNonHeadingIssues": "List of elements with bold text larger than the smallest heading",
+                "font_analysis.accessibility.smallestHeadingSize": "Size of the smallest heading for comparison"
+            }
+        }
+    ]
+}
+
 async def test_fonts(page):
     try:
         font_data = await page.evaluate('''
@@ -244,7 +324,8 @@ async def test_fonts(page):
 
         return {
             'font_analysis': font_data,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'documentation': TEST_DOCUMENTATION  # Include test documentation in results
         }
 
     except Exception as e:
@@ -273,5 +354,6 @@ async def test_fonts(page):
                     },
                     'smallestHeadingSize': None
                 }
-            }
+            },
+            'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
         }

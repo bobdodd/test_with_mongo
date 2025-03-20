@@ -1,5 +1,74 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "List Structure Analysis",
+    "description": "Evaluates the implementation and styling of HTML lists to ensure proper semantic structure for screen reader users. This test identifies improper list implementations, excessive nesting, empty lists, and custom bullet styling that may impact accessibility.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.nestedLists": "Information about nested list structures",
+        "details.customBulletUsage": "Information about custom bullet styling",
+        "details.violations": "List of list structure violations",
+        "details.warnings": "List of potential issues that are not violations"
+    },
+    "tests": [
+        {
+            "id": "fake-lists",
+            "name": "Fake List Detection",
+            "description": "Identifies elements that visually appear as lists but don't use proper list markup (ul/ol and li elements).",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "Replace fake lists with proper semantic HTML list elements (<ul> or <ol> with <li> elements) to ensure screen readers can identify and announce them correctly.",
+            "resultsFields": {
+                "pageFlags.hasFakeLists": "Indicates if fake lists are present",
+                "pageFlags.details.fakeLists": "Count of fake list implementations",
+                "details.violations": "List of violations including fake list implementations"
+            }
+        },
+        {
+            "id": "empty-lists",
+            "name": "Empty List Detection",
+            "description": "Identifies list elements (ul/ol) that contain no list items.",
+            "impact": "medium",
+            "wcagCriteria": ["4.1.1"],
+            "howToFix": "Remove empty list elements, or add appropriate list items. Empty lists can confuse screen reader users who hear a list announced but find no items.",
+            "resultsFields": {
+                "pageFlags.hasEmptyLists": "Indicates if empty lists are present",
+                "details.violations": "List of violations including empty lists"
+            }
+        },
+        {
+            "id": "deep-nesting",
+            "name": "Excessive List Nesting",
+            "description": "Identifies lists with excessive nesting depth that may cause navigation difficulties.",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.10"],
+            "howToFix": "Limit list nesting to 3 levels or fewer. For deeply nested information, consider alternative structures such as headings with content.",
+            "resultsFields": {
+                "pageFlags.hasDeepNesting": "Indicates if deeply nested lists are present",
+                "pageFlags.details.maxNestingDepth": "Maximum nesting depth found",
+                "details.warnings": "List of warnings including deep nesting issues"
+            }
+        },
+        {
+            "id": "custom-bullets",
+            "name": "Custom Bullet Styling",
+            "description": "Identifies lists with custom bullet styling that may impact screen reader announcements.",
+            "impact": "low",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "When using custom bullets via CSS, ensure they don't replace the semantic list structure. Use list-style-type or list-style-image properties rather than replacing list items with non-list elements.",
+            "resultsFields": {
+                "pageFlags.hasCustomBullets": "Indicates if custom bullet styling is present",
+                "pageFlags.details.customBullets": "Count of custom bullet implementations",
+                "details.customBulletUsage": "List of list items with custom bullet styling"
+            }
+        }
+    ]
+}
+
 async def test_lists(page):
     """
     Test proper implementation of lists and their styling
@@ -173,7 +242,8 @@ async def test_lists(page):
             'lists': {
                 'pageFlags': list_data['pageFlags'],
                 'details': list_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -203,6 +273,7 @@ async def test_lists(page):
                         'details': str(e)
                     }],
                     'warnings': []
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

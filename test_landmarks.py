@@ -1,5 +1,98 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "ARIA Landmark Analysis",
+    "description": "Evaluates webpage landmark structure to ensure proper semantic organization and navigation for screen reader users. This test checks for required landmarks, proper nesting, and appropriate labeling of content regions.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key landmark issues",
+        "details.landmarks": "List of all landmarks with their properties",
+        "details.violations": "List of landmark structure violations",
+        "details.contentOutsideLandmarks": "List of text content outside of landmarks",
+        "details.summary": "Aggregated statistics about landmark structure"
+    },
+    "tests": [
+        {
+            "id": "main-landmark",
+            "name": "Main Landmark Presence",
+            "description": "Checks if the page has a main landmark that contains the primary content.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.1"],
+            "howToFix": "Add a <main> element or an element with role='main' that contains the primary content of the page.",
+            "resultsFields": {
+                "pageFlags.missingRequiredLandmarks": "Indicates if any required landmarks are missing",
+                "pageFlags.details.missingLandmarks.main": "Indicates if the main landmark is missing",
+                "details.summary.hasMain": "Boolean indicating if main landmark exists"
+            }
+        },
+        {
+            "id": "banner-landmark",
+            "name": "Banner Landmark",
+            "description": "Verifies that the page has a banner landmark for site-wide header content.",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "Use a top-level <header> element or an element with role='banner' for the site header that contains site-wide information.",
+            "resultsFields": {
+                "pageFlags.details.missingLandmarks.banner": "Indicates if the banner landmark is missing",
+                "details.summary.hasBanner": "Boolean indicating if banner landmark exists"
+            }
+        },
+        {
+            "id": "contentinfo-landmark",
+            "name": "Contentinfo Landmark",
+            "description": "Checks if the page has a contentinfo landmark for footer content.",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "Use a top-level <footer> element or an element with role='contentinfo' for the site footer that contains information about the document.",
+            "resultsFields": {
+                "pageFlags.details.missingLandmarks.contentinfo": "Indicates if the contentinfo landmark is missing",
+                "details.summary.hasContentinfo": "Boolean indicating if contentinfo landmark exists"
+            }
+        },
+        {
+            "id": "content-in-landmarks",
+            "name": "Content Within Landmarks",
+            "description": "Evaluates whether all content on the page is contained within appropriate landmarks.",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1", "2.4.1"],
+            "howToFix": "Ensure all page content is contained within appropriate landmark regions to provide context and structure for screen reader users.",
+            "resultsFields": {
+                "pageFlags.hasContentOutsideLandmarks": "Indicates if content exists outside of landmarks",
+                "pageFlags.details.contentOutsideLandmarksCount": "Count of text nodes outside landmarks",
+                "details.contentOutsideLandmarks": "List of content found outside landmark regions"
+            }
+        },
+        {
+            "id": "duplicate-landmarks",
+            "name": "Duplicate Landmark Identification",
+            "description": "Checks if multiple landmarks of the same type have unique labels to distinguish them.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.1"],
+            "howToFix": "When using multiple landmarks of the same type (e.g., navigation, complementary), provide unique names using aria-label or aria-labelledby attributes.",
+            "resultsFields": {
+                "pageFlags.hasDuplicateLandmarksWithoutNames": "Indicates if duplicate landmarks lack unique names",
+                "pageFlags.details.duplicateLandmarks": "Count of each landmark type and unique names",
+                "details.violations": "List of landmark violations including duplicates without labels"
+            }
+        },
+        {
+            "id": "landmark-nesting",
+            "name": "Landmark Nesting",
+            "description": "Evaluates proper nesting of landmarks to ensure top-level landmarks aren't nested inside others.",
+            "impact": "medium",
+            "wcagCriteria": ["1.3.1"],
+            "howToFix": "Ensure main, banner, contentinfo and complementary landmarks are not nested inside other landmarks.",
+            "resultsFields": {
+                "pageFlags.hasNestedTopLevelLandmarks": "Indicates if top-level landmarks are improperly nested",
+                "details.violations": "List of landmark violations including nested landmarks"
+            }
+        }
+    ]
+}
+
 async def test_landmarks(page):
     """
     Test page landmark structure and requirements, with proper handling of
@@ -286,7 +379,8 @@ async def test_landmarks(page):
             'landmarks': {
                 'pageFlags': landmarks_data['pageFlags'],
                 'details': landmarks_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -326,6 +420,7 @@ async def test_landmarks(page):
                         'totalLandmarks': 0,
                         'duplicateLandmarks': {}
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

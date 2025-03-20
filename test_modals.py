@@ -1,5 +1,73 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Modal Dialog Accessibility Analysis",
+    "description": "Evaluates modal dialogs for proper accessibility implementation, including focus management, proper heading structure, and close mechanisms. This test identifies modals that don't follow best practices for keyboard and screen reader accessibility.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.modals": "List of all modal dialogs with their properties",
+        "details.summary": "Aggregated statistics about modal dialog accessibility"
+    },
+    "tests": [
+        {
+            "id": "dialog-heading",
+            "name": "Dialog Heading Structure",
+            "description": "Checks if modal dialogs begin with a proper heading element (H1 or H2) to identify their purpose.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.6"],
+            "howToFix": "Ensure each modal dialog begins with an H1 or H2 heading that clearly identifies the dialog's purpose. This heading should be the first element within the dialog.",
+            "resultsFields": {
+                "pageFlags.details.modalsWithoutProperHeading": "Count of modal dialogs without proper headings",
+                "details.modals[].heading.hasProperHeading": "Boolean indicating if a specific modal has a proper heading",
+                "details.modals[].violations": "List of violations including heading issues"
+            }
+        },
+        {
+            "id": "dialog-trigger",
+            "name": "Dialog Trigger Elements",
+            "description": "Identifies whether each modal dialog has associated trigger elements that open it.",
+            "impact": "medium",
+            "wcagCriteria": ["4.1.2"],
+            "howToFix": "Ensure each modal dialog has at least one associated trigger element (button or link) that opens it, with a clear relationship between the trigger and the dialog.",
+            "resultsFields": {
+                "pageFlags.details.modalsWithoutTriggers": "Count of modal dialogs without identified triggers",
+                "details.modals[].triggers": "List of trigger elements for a specific modal",
+                "details.modals[].violations": "List of violations including missing triggers"
+            }
+        },
+        {
+            "id": "dialog-close",
+            "name": "Dialog Close Mechanism",
+            "description": "Checks if modal dialogs provide a clear mechanism to close them.",
+            "impact": "high",
+            "wcagCriteria": ["2.1.2"],
+            "howToFix": "Add a clearly identifiable close button to each modal dialog, with text or aria-label containing 'close'. Ensure it's positioned consistently (typically in the top-right corner).",
+            "resultsFields": {
+                "pageFlags.details.modalsWithoutClose": "Count of modal dialogs without close mechanisms",
+                "details.modals[].closeElements": "List of close elements for a specific modal",
+                "details.modals[].violations": "List of violations including missing close mechanisms"
+            }
+        },
+        {
+            "id": "focus-management",
+            "name": "Dialog Focus Management",
+            "description": "Evaluates if modal dialogs properly manage keyboard focus when opened and closed.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.3", "2.4.7"],
+            "howToFix": "Implement proper focus management that moves focus to the dialog when opened (typically to the first focusable element or heading) and returns focus to the trigger element when closed.",
+            "resultsFields": {
+                "pageFlags.details.modalsWithoutFocusManagement": "Count of modal dialogs without proper focus management",
+                "details.modals[].focusManagement": "Focus management information for a specific modal",
+                "details.modals[].violations": "List of violations including focus management issues"
+            }
+        }
+    ]
+}
+
 async def test_modals(page):
     """
     Test modal dialogs for accessibility requirements including proper headings
@@ -260,7 +328,8 @@ async def test_modals(page):
             'modals': {
                 'pageFlags': modals_data['pageFlags'],
                 'details': modals_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -286,6 +355,7 @@ async def test_modals(page):
                         'issue': 'Error evaluating modals',
                         'details': str(e)
                     }]
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

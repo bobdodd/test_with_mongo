@@ -1,5 +1,61 @@
 from datetime import datetime
 
+# Test documentation with information about the text resize test
+TEST_DOCUMENTATION = {
+    "testName": "Text Resize Test",
+    "description": "Tests the ability of a webpage to support text resizing to 200% without loss of content or functionality. WCAG 1.4.4 requires that text can be resized without assistive technology up to 200% without loss of content or functionality.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "pageFlags": "Boolean flags indicating the presence of accessibility issues",
+        "details": "Detailed information about the test results across different viewports",
+        "results": "Array of viewport-specific test results, including overlapping and truncated elements"
+    },
+    "tests": [
+        {
+            "id": "text-resize-overlap",
+            "name": "Text Resize Overlap Test",
+            "description": "Checks if text elements overlap with other content when resized to 200%",
+            "impact": "high",
+            "wcagCriteria": ["1.4.4"],
+            "howToFix": "Ensure containers have sufficient padding and use flexible layout techniques like responsive design. Avoid fixed-height containers for text, and implement proper text wrapping and container expansion. Use relative units (em, rem) rather than fixed pixel sizes for font and container dimensions.",
+            "resultsFields": {
+                "overlaps": "List of text elements that overlap with other elements when resized",
+                "source": "The text element that, when resized, caused overlapping",
+                "overlappingElements": "Elements that overlap with the resized text"
+            }
+        },
+        {
+            "id": "text-resize-truncation",
+            "name": "Text Resize Truncation Test",
+            "description": "Checks if text is truncated or clipped when resized to 200%",
+            "impact": "high",
+            "wcagCriteria": ["1.4.4"],
+            "howToFix": "Remove fixed-height containers for text content, ensure overflow properties don't hide content, and use flexible layout techniques that allow containers to expand with text. Consider implementing responsive layouts that reflow content at different text sizes.",
+            "resultsFields": {
+                "truncated": "List of text elements that become truncated when resized",
+                "xpath": "XPath of the element with truncation issues",
+                "element": "HTML tag of the element with truncation issues",
+                "id": "ID attribute of the element if available",
+                "text": "Sample of the text content in the truncated element"
+            }
+        },
+        {
+            "id": "text-resize-across-breakpoints",
+            "name": "Text Resize Across Responsive Breakpoints",
+            "description": "Tests text resize behavior across different responsive layout breakpoints",
+            "impact": "medium",
+            "wcagCriteria": ["1.4.4"],
+            "howToFix": "Ensure that responsive layouts maintain proper text sizing and container dimensions across all breakpoints. Test and adjust media queries to handle resized text appropriately at each breakpoint.",
+            "resultsFields": {
+                "viewport": "The viewport dimensions being tested",
+                "results": "Results specific to each viewport size",
+                "hasIssues": "Whether any resize issues were found at this viewport size"
+            }
+        }
+    ]
+}
+
 async def test_text_resize(page):
     """
     Test text resize to 200% without content loss or overlap
@@ -208,7 +264,8 @@ async def test_text_resize(page):
                     }
                 },
                 'results': resize_results,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION
             }
         }
 
@@ -226,6 +283,7 @@ async def test_text_resize(page):
                     }
                 },
                 'results': [],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION
             }
         }

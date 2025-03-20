@@ -1,5 +1,73 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Digital Maps Accessibility Analysis",
+    "description": "Evaluates embedded digital maps for proper accessibility attributes and alternative content. This test identifies common map implementations including Google Maps, Mapbox, and Leaflet, and checks that they are properly labeled and accessible to screen reader users.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.maps": "List of all map elements with their properties",
+        "details.violations": "List of map accessibility violations",
+        "details.summary": "Aggregated statistics about maps usage"
+    },
+    "tests": [
+        {
+            "id": "map-title",
+            "name": "Map Title Attribute",
+            "description": "Checks if embedded map iframes have descriptive title attributes to identify their purpose.",
+            "impact": "high",
+            "wcagCriteria": ["2.4.1", "4.1.2"],
+            "howToFix": "Add a descriptive title attribute to all map iframes that clearly explains the map's purpose and content (e.g., 'Map showing our office locations in North America').",
+            "resultsFields": {
+                "pageFlags.hasMapsWithoutTitle": "Indicates if any maps are missing title attributes",
+                "pageFlags.details.mapsWithoutTitle": "Count of maps missing title attributes",
+                "details.violations": "List of violations including maps without titles"
+            }
+        },
+        {
+            "id": "map-aria-hidden",
+            "name": "Maps with aria-hidden",
+            "description": "Identifies maps that have been hidden from screen readers with aria-hidden attribute.",
+            "impact": "high",
+            "wcagCriteria": ["1.1.1"],
+            "howToFix": "Remove aria-hidden='true' from map elements unless you provide an alternative text description or representation of the map content elsewhere on the page.",
+            "resultsFields": {
+                "pageFlags.hasMapsWithAriaHidden": "Indicates if any maps have aria-hidden='true'",
+                "pageFlags.details.mapsWithAriaHidden": "Count of maps with aria-hidden='true'",
+                "details.violations": "List of violations including maps with aria-hidden='true'"
+            }
+        },
+        {
+            "id": "div-map-accessibility",
+            "name": "Div-based Map Accessibility",
+            "description": "Checks if div-based maps (like Leaflet or Mapbox) have proper ARIA attributes for accessibility.",
+            "impact": "high",
+            "wcagCriteria": ["1.1.1", "4.1.2"],
+            "howToFix": "For div-based maps, add appropriate aria attributes like aria-label and role='application' or role='img', along with textual alternatives that describe the map's purpose and key information.",
+            "resultsFields": {
+                "details.violations": "List of violations including div maps missing accessibility attributes"
+            }
+        },
+        {
+            "id": "map-identification",
+            "name": "Map Provider Identification",
+            "description": "Identifies the map providers used on the page for informational purposes.",
+            "impact": "informational",
+            "wcagCriteria": [],
+            "howToFix": "This is an informational test only. No remediation required.",
+            "resultsFields": {
+                "pageFlags.hasMaps": "Indicates if maps are present on the page",
+                "pageFlags.details.totalMaps": "Count of maps found on the page",
+                "pageFlags.details.mapsByProvider": "Breakdown of maps by provider",
+                "details.maps": "List of all maps with their properties"
+            }
+        }
+    ]
+}
+
 async def test_maps(page):
     """
     Test for embedded digital maps and their accessibility attributes
@@ -164,7 +232,8 @@ async def test_maps(page):
             'maps': {
                 'pageFlags': maps_data['pageFlags'],
                 'details': maps_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -196,6 +265,7 @@ async def test_maps(page):
                         'mapsWithoutTitle': 0,
                         'mapsWithAriaHidden': 0
                     }
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

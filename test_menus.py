@@ -1,5 +1,74 @@
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "Navigation Menu Analysis",
+    "description": "Evaluates website navigation menus and landmarks for proper semantic structure and ARIA attributes. This test identifies navigation elements without accessible names, current page indicators, and inappropriate menu role usage.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.menus": "List of all navigation menus with their properties",
+        "details.invalidRoles": "List of elements with inappropriate menu roles",
+        "details.violations": "List of navigation accessibility violations",
+        "details.warnings": "List of potential issues that are not violations"
+    },
+    "tests": [
+        {
+            "id": "nav-accessible-name",
+            "name": "Navigation Accessible Name",
+            "description": "Checks if navigation elements have accessible names to distinguish them from each other.",
+            "impact": "high",
+            "wcagCriteria": ["1.3.1", "2.4.1"],
+            "howToFix": "Add an aria-label or aria-labelledby attribute to each <nav> element that clearly describes its purpose (e.g., 'Main Navigation', 'Footer Links', 'User Account Menu').",
+            "resultsFields": {
+                "pageFlags.hasUnnamedMenus": "Indicates if any navigation elements lack accessible names",
+                "pageFlags.details.unnamedMenus": "Count of navigation elements without accessible names",
+                "details.violations": "List of violations including unnamed navigation elements"
+            }
+        },
+        {
+            "id": "duplicate-menu-names",
+            "name": "Duplicate Navigation Names",
+            "description": "Identifies navigation elements that share the same accessible name.",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.1"],
+            "howToFix": "Ensure each navigation landmark has a unique accessible name that describes its specific purpose.",
+            "resultsFields": {
+                "pageFlags.hasDuplicateMenuNames": "Indicates if any navigation elements share the same name",
+                "details.violations": "List of violations including duplicate navigation names"
+            }
+        },
+        {
+            "id": "current-page-indicator",
+            "name": "Current Page Indicator",
+            "description": "Checks if navigation menus indicate the current page or section.",
+            "impact": "medium",
+            "wcagCriteria": ["2.4.8"],
+            "howToFix": "Add aria-current='page' to the navigation link that corresponds to the current page, or aria-current='true' for the current section.",
+            "resultsFields": {
+                "pageFlags.hasMenusWithoutCurrent": "Indicates if any navigation menus don't mark the current page",
+                "pageFlags.details.menusWithoutCurrent": "Count of navigation menus without current page indicators",
+                "details.warnings": "List of warnings including navigation without current indicators"
+            }
+        },
+        {
+            "id": "inappropriate-menu-roles",
+            "name": "Inappropriate Menu Roles",
+            "description": "Identifies improper use of menu roles for site navigation.",
+            "impact": "high",
+            "wcagCriteria": ["4.1.2"],
+            "howToFix": "Don't use role='menu' or role='menuitem' for website navigation. These roles are specifically for application menus, not website navigation. Use <nav> elements with lists of links instead.",
+            "resultsFields": {
+                "pageFlags.hasInvalidMenuRoles": "Indicates if inappropriate menu roles are present",
+                "pageFlags.details.invalidRoles": "Count of elements with inappropriate menu roles",
+                "details.invalidRoles": "List of elements with inappropriate menu roles"
+            }
+        }
+    ]
+}
+
 async def test_menus(page):
     """
     Test proper implementation of menus and navigation
@@ -180,7 +249,8 @@ async def test_menus(page):
             'menus': {
                 'pageFlags': menu_data['pageFlags'],
                 'details': menu_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
@@ -209,6 +279,7 @@ async def test_menus(page):
                         'details': str(e)
                     }],
                     'warnings': []
-                }
+                },
+                'documentation': TEST_DOCUMENTATION  # Include test documentation even in error case
             }
         }

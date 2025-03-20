@@ -1,6 +1,64 @@
 import asyncio
 from datetime import datetime
 
+# Test metadata for documentation and reporting
+TEST_DOCUMENTATION = {
+    "testName": "JavaScript Timer Control Analysis",
+    "description": "Evaluates JavaScript timers (setTimeout and setInterval) for proper user control mechanisms. This test identifies automatically starting timers and content that changes without user initiation, which may cause issues for users with cognitive disabilities.",
+    "version": "1.0.0",
+    "date": "2025-03-19",
+    "dataSchema": {
+        "timestamp": "ISO timestamp when the test was run",
+        "pageFlags": "Boolean flags indicating presence of key issues",
+        "details.timers": "List of all JavaScript timers with their properties",
+        "details.controls": "List of interactive elements that control timers",
+        "details.violations": "List of timer-related accessibility violations",
+        "details.summary": "Aggregated statistics about timer usage"
+    },
+    "tests": [
+        {
+            "id": "auto-start-timers",
+            "name": "Auto-Starting Timers",
+            "description": "Identifies timers that start automatically on page load without user interaction.",
+            "impact": "high",
+            "wcagCriteria": ["2.2.1", "2.2.2"],
+            "howToFix": "Add user controls for starting any timed content or animations. Auto-starting timers should be avoided unless they are essential for the functionality of the page.",
+            "resultsFields": {
+                "pageFlags.hasAutoStartTimers": "Indicates if any timers start automatically",
+                "pageFlags.details.autoStartTimers": "Count of auto-starting timers",
+                "details.violations": "List of violations including auto-start timer issues"
+            }
+        },
+        {
+            "id": "timer-controls",
+            "name": "Timer Control Mechanisms",
+            "description": "Checks if timers have associated user interface controls (play, pause, stop).",
+            "impact": "high",
+            "wcagCriteria": ["2.2.1", "2.2.2"],
+            "howToFix": "Provide visible, accessible controls that allow users to pause, stop, or hide any content that automatically moves, blinks, scrolls, or auto-updates.",
+            "resultsFields": {
+                "pageFlags.hasTimersWithoutControls": "Indicates if any timers lack user controls",
+                "pageFlags.details.timersWithoutControls": "Count of timers without user controls",
+                "details.controls": "List of timer control elements found on the page",
+                "details.violations": "List of violations including missing timer controls"
+            }
+        },
+        {
+            "id": "timer-detection",
+            "name": "JavaScript Timer Detection",
+            "description": "Identifies JavaScript timers used on the page for informational purposes.",
+            "impact": "informational",
+            "wcagCriteria": [],
+            "howToFix": "This test is informational and identifies all timers (setTimeout and setInterval) used on the page.",
+            "resultsFields": {
+                "pageFlags.hasTimers": "Indicates if any JavaScript timers are present",
+                "pageFlags.details.totalTimers": "Count of timers found on the page",
+                "details.timers": "List of all timers with their properties"
+            }
+        }
+    ]
+}
+
 async def test_timers(page):
     """
     Test for presence and control of timers in JavaScript
@@ -214,7 +272,8 @@ async def test_timers(page):
             'timers': {
                 'pageFlags': timer_data['pageFlags'],
                 'details': timer_data['results'],
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
             }
         }
 
