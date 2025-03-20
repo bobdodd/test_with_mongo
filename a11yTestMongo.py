@@ -5,6 +5,8 @@ import platform
 import sys
 import os
 import re
+import importlib
+import inspect
 from urllib.parse import urlparse
 import json
 from datetime import datetime
@@ -16,20 +18,20 @@ from analyze_structure import analyze_common_structure
 from test_document_links import test_document_links
 from test_fonts import test_fonts
 from test_html_structure import test_html_structure
-from test_focus_management import test_focus_management
-from test_accessible_names import test_accessible_names
-from test_images import test_images
+from test_focus_management import test_focus_management, TEST_DOCUMENTATION as FOCUS_MANAGEMENT_DOCS
+from test_accessible_names import test_accessible_names, TEST_DOCUMENTATION as ACCESSIBLE_NAMES_DOCS
+from test_images import test_images, TEST_DOCUMENTATION as IMAGES_DOCS
 from test_videos import test_videos
 from test_landmarks import test_landmarks
 from test_forms import test_forms
-from test_headings import test_headings
+from test_headings import test_headings, TEST_DOCUMENTATION as HEADINGS_DOCS
 from test_read_more_links import test_read_more_links
 from test_tabindex import test_tabindex
 from test_timers import test_timers
 from test_animations import test_animations
 from test_maps import test_maps
 from test_colors import test_colors
-from test_tables import test_tables
+from test_tables import test_tables, TEST_DOCUMENTATION as TABLES_DOCS
 from test_modals import test_modals
 from test_event_handlers import test_event_handlers
 from test_title_attribute import test_title_attribute
@@ -37,7 +39,7 @@ from test_lists import test_lists
 from test_menus import test_menus
 from test_floating_dialogs import test_floating_dialogs
 from test_text_resize import test_text_resize
-from test_page_structure import test_page_structure
+from test_page_structure import test_page_structure, TEST_DOCUMENTATION as PAGE_STRUCTURE_DOCS
 
 def clean_filename(url):
     """
@@ -201,6 +203,64 @@ async def test_page_accessibility(page):
             'tests': {}
         }
     
+def collect_test_documentation():
+    """
+    Collects TEST_DOCUMENTATION objects from all test modules.
+    
+    Returns:
+        dict: A dictionary mapping test names to their documentation objects
+    """
+    print("Collecting test documentation from all test modules...")
+    documentation = {}
+    
+    # Add the manually imported documentation
+    documentation['page_structure'] = PAGE_STRUCTURE_DOCS
+    documentation['accessible_names'] = ACCESSIBLE_NAMES_DOCS
+    documentation['focus_management'] = FOCUS_MANAGEMENT_DOCS
+    documentation['images'] = IMAGES_DOCS
+    documentation['tables'] = TABLES_DOCS
+    documentation['headings'] = HEADINGS_DOCS
+    
+    # Get the current module directory
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Attempt to dynamically discover and import additional test modules
+    print(f"Searching for test modules in: {module_dir}")
+    
+    try:
+        for filename in os.listdir(module_dir):
+            if filename.startswith('test_') and filename.endswith('.py'):
+                module_name = filename[:-3]  # Remove .py extension
+                
+                # Skip modules we've already imported manually
+                if module_name in ['test_page_structure', 'test_accessible_names', 
+                                  'test_focus_management', 'test_images', 
+                                  'test_tables', 'test_headings']:
+                    continue
+                
+                print(f"Checking {module_name} for TEST_DOCUMENTATION...")
+                
+                try:
+                    # Import the module if not already imported
+                    if module_name not in sys.modules:
+                        module = importlib.import_module(f".{module_name}", package=__package__)
+                    else:
+                        module = sys.modules[f"{__package__}.{module_name}"]
+                    
+                    # Check if the module has a TEST_DOCUMENTATION attribute
+                    if hasattr(module, 'TEST_DOCUMENTATION'):
+                        # Extract the test name (remove 'test_' prefix)
+                        test_name = module_name[5:] if module_name.startswith('test_') else module_name
+                        documentation[test_name] = module.TEST_DOCUMENTATION
+                        print(f"Found documentation for {test_name}")
+                except Exception as e:
+                    print(f"Error checking {module_name}: {e}")
+    except Exception as e:
+        print(f"Error scanning test directory: {e}")
+    
+    print(f"Collected documentation for {len(documentation)} tests")
+    return documentation
+
 async def process_urls(file_path, screenshots_dir, results_file, max_pages, clear_db, delay):
     """
     Process URLs from the input file one at a time using Puppeteer
@@ -213,6 +273,9 @@ async def process_urls(file_path, screenshots_dir, results_file, max_pages, clea
         print("Clearing database...")
         db.clear_database()
     
+    # Collect test documentation from all modules
+    test_documentation = collect_test_documentation()
+    
     # Create settings dictionary
     settings = {
         'screenshots_dir': screenshots_dir,
@@ -223,8 +286,8 @@ async def process_urls(file_path, screenshots_dir, results_file, max_pages, clea
         'delay_between_pages': delay
     }
     
-    # Start new test run
-    test_run_id = db.start_new_test_run(settings)
+    # Start new test run with documentation included
+    test_run_id = db.start_new_test_run(settings, documentation=test_documentation)
     
     # Create screenshots directory if it doesn't exist
     os.makedirs(screenshots_dir, exist_ok=True)

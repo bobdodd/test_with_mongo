@@ -23,13 +23,28 @@ class AccessibilityDB:
             print(f"Failed to connect to MongoDB: {e}")
             raise
 
-    def start_new_test_run(self, settings):
-        """Create a new test run and return its ID"""
+    def start_new_test_run(self, settings, documentation=None):
+        """
+        Create a new test run and return its ID
+        
+        Args:
+            settings: Dictionary of test run settings
+            documentation: Optional dictionary of test documentation objects
+        
+        Returns:
+            str: The ID of the created test run
+        """
         test_run = {
             'timestamp_start': datetime.now().isoformat(),
             'status': 'in_progress',
             'settings': settings
         }
+        
+        # Add documentation if provided
+        if documentation:
+            test_run['documentation'] = documentation
+            print(f"Including documentation for {len(documentation)} test types in test run")
+        
         result = self.test_runs.insert_one(test_run)
         return str(result.inserted_id)
 
