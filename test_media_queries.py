@@ -180,9 +180,34 @@ async def test_media_queries(page):
                     // Extract and sort breakpoints
                     const sortedBreakpoints = Array.from(breakpoints).sort((a, b) => a - b);
                     
+                    // Group breakpoints for easier analysis
+                    const breakpointGroups = {
+                        mobile: sortedBreakpoints.filter(bp => bp <= 480),
+                        tablet: sortedBreakpoints.filter(bp => bp > 480 && bp <= 768),
+                        desktop: sortedBreakpoints.filter(bp => bp > 768 && bp <= 1200),
+                        largeScreen: sortedBreakpoints.filter(bp => bp > 1200)
+                    };
+                    
+                    // Create breakpoint objects with types
+                    const breakpointObjects = sortedBreakpoints.map(bp => {
+                        let type = 'unknown';
+                        if (bp <= 480) type = 'mobile';
+                        else if (bp <= 768) type = 'tablet';
+                        else if (bp <= 1200) type = 'desktop';
+                        else type = 'largeScreen';
+                        
+                        return {
+                            breakpoint: bp,
+                            type: type,
+                            unit: 'px'
+                        };
+                    });
+                    
                     return {
                         mediaQueries: mediaQueries,
                         breakpoints: sortedBreakpoints,
+                        breakpointObjects: breakpointObjects,
+                        breakpointGroups: breakpointGroups,
                         summary: {
                             totalMediaQueries: mediaQueries.length,
                             widthBasedQueries: mediaQueries.filter(mq => mq.features.isWidthBased).length,
@@ -202,10 +227,22 @@ async def test_media_queries(page):
         print("\nMedia Queries Analysis Summary:")
         print(f"Total Media Queries: {media_queries_data['summary']['totalMediaQueries']}")
         
-        if media_queries_data['breakpoints'].length > 0:
+        if media_queries_data['breakpoints'] and media_queries_data['breakpoints'].length > 0:
             print("\nResponsive Breakpoints Found:")
             for breakpoint in media_queries_data['breakpoints']:
                 print(f"  - {breakpoint}px")
+            
+            # Print breakpoints by group
+            if media_queries_data['breakpointGroups']:
+                print("\nBreakpoints by Device Category:")
+                if media_queries_data['breakpointGroups']['mobile'].length > 0:
+                    print("  Mobile:", ', '.join([f"{bp}px" for bp in media_queries_data['breakpointGroups']['mobile']]))
+                if media_queries_data['breakpointGroups']['tablet'].length > 0:
+                    print("  Tablet:", ', '.join([f"{bp}px" for bp in media_queries_data['breakpointGroups']['tablet']]))
+                if media_queries_data['breakpointGroups']['desktop'].length > 0:
+                    print("  Desktop:", ', '.join([f"{bp}px" for bp in media_queries_data['breakpointGroups']['desktop']]))
+                if media_queries_data['breakpointGroups']['largeScreen'].length > 0:
+                    print("  Large Screen:", ', '.join([f"{bp}px" for bp in media_queries_data['breakpointGroups']['largeScreen']]))
                 
         print("\nFeatures Detected:")
         print(f"  - Width-based Media Queries: {media_queries_data['summary']['widthBasedQueries']}")
@@ -250,17 +287,31 @@ async def test_media_queries(page):
                 'recommendation': 'Add @media (prefers-reduced-motion: reduce) queries to provide alternatives for users who prefer reduced motion.'
             })
         
+        # Create a separate object for responsive breakpoints that can be easily queried
+        responsive_breakpoints = {
+            'allBreakpoints': media_queries_data['breakpoints'] || [],
+            'byCategory': media_queries_data['breakpointGroups'] || {
+                mobile: [],
+                tablet: [],
+                desktop: [],
+                largeScreen: []
+            },
+            'breakpointObjects': media_queries_data['breakpointObjects'] || []
+        };
+        
         return {
             'media_queries': {
                 'pageFlags': page_flags,
                 'details': {
                     'mediaQueries': media_queries_data['mediaQueries'],
                     'breakpoints': media_queries_data['breakpoints'],
+                    'breakpointGroups': media_queries_data['breakpointGroups'],
                     'summary': media_queries_data['summary'],
                     'recommendations': recommendations
                 },
+                'responsiveBreakpoints': responsive_breakpoints,  // Dedicated field for easy database queries
                 'timestamp': datetime.now().isoformat(),
-                'documentation': TEST_DOCUMENTATION  # Include test documentation in results
+                'documentation': TEST_DOCUMENTATION  // Include test documentation in results
             }
         }
     except Exception as e:
