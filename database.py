@@ -3,13 +3,32 @@ from datetime import datetime
 import json
 from bson import ObjectId
 
+DEFAULT_DB_NAME = 'accessibility_tests'
+
 class AccessibilityDB:
-    def __init__(self):
+    def __init__(self, db_name=None, create_if_not_exists=False):
         try:
             self.client = MongoClient('mongodb://localhost:27017/',
                                     serverSelectionTimeoutMS=5000)
             self.client.server_info()
-            self.db = self.client['accessibility_tests']
+            
+            # Use the specified database name or default
+            if db_name is None:
+                db_name = DEFAULT_DB_NAME
+                print(f"Warning: No database name specified. Using default database '{DEFAULT_DB_NAME}'.")
+            
+            # Check if database exists or needs to be created
+            db_names = self.client.list_database_names()
+            db_exists = db_name in db_names or db_name in ['admin', 'config', 'local']
+            
+            if not db_exists and not create_if_not_exists:
+                # Database doesn't exist and auto-creation is not enabled
+                response = input(f"Database '{db_name}' does not exist. Create it? (y/n): ")
+                if response.lower() != 'y':
+                    raise ValueError(f"Database '{db_name}' does not exist and was not created.")
+            
+            self.db_name = db_name
+            self.db = self.client[db_name]
             
             # Separate collections for test runs and page results
             self.test_runs = self.db['test_runs']
@@ -19,6 +38,8 @@ class AccessibilityDB:
             self.page_results.create_index([('url', 1), ('test_run_id', 1)])
             self.page_results.create_index('timestamp')
             self.test_runs.create_index('timestamp')
+            
+            print(f"Connected to database: '{db_name}'")
         except Exception as e:
             print(f"Failed to connect to MongoDB: {e}")
             raise
@@ -124,7 +145,7 @@ class AccessibilityDB:
             print(f"Error exporting to JSON: {e}")
 
     def clear_database(self):
-        """Clear all collections in the database"""
+        """Clear all collections in the specific database"""
         try:
             self.test_runs.drop()
             self.page_results.drop()
@@ -134,9 +155,9 @@ class AccessibilityDB:
             self.page_results.create_index('timestamp')
             self.test_runs.create_index('timestamp')
             
-            print("Database cleared successfully")
+            print(f"Database '{self.db_name}' cleared successfully")
         except Exception as e:
-            print(f"Error clearing database: {e}")
+            print(f"Error clearing database '{self.db_name}': {e}")
 
 
 

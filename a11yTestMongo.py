@@ -15,6 +15,7 @@ from analyze_structure import analyze_common_structure
 
 
 # Your existing test imports
+from test_media_queries import test_media_queries, TEST_DOCUMENTATION as MEDIA_QUERIES_DOCS
 from test_document_links import test_document_links
 from test_fonts import test_fonts
 from test_html_structure import test_html_structure
@@ -62,6 +63,11 @@ async def test_page_accessibility(page):
             'url': page.url,
             'tests': {}
         }
+        
+        # Test for media queries first
+        print("Testing for CSS media queries and responsive breakpoints...")
+        media_queries_results = await test_media_queries(page)
+        results['tests']['media_queries'] = media_queries_results
 
         # Test for document links
         print("Testing for electronic documents...")
@@ -214,6 +220,7 @@ def collect_test_documentation():
     documentation = {}
     
     # Add the manually imported documentation
+    documentation['media_queries'] = MEDIA_QUERIES_DOCS
     documentation['page_structure'] = PAGE_STRUCTURE_DOCS
     documentation['accessible_names'] = ACCESSIBLE_NAMES_DOCS
     documentation['focus_management'] = FOCUS_MANAGEMENT_DOCS
@@ -233,7 +240,7 @@ def collect_test_documentation():
                 module_name = filename[:-3]  # Remove .py extension
                 
                 # Skip modules we've already imported manually
-                if module_name in ['test_page_structure', 'test_accessible_names', 
+                if module_name in ['test_media_queries', 'test_page_structure', 'test_accessible_names', 
                                   'test_focus_management', 'test_images', 
                                   'test_tables', 'test_headings']:
                     continue
@@ -261,16 +268,16 @@ def collect_test_documentation():
     print(f"Collected documentation for {len(documentation)} tests")
     return documentation
 
-async def process_urls(file_path, screenshots_dir, results_file, max_pages, clear_db, delay):
+async def process_urls(file_path, screenshots_dir, results_file, max_pages, clear_db, delay, db_name, auto_create_db):
     """
     Process URLs from the input file one at a time using Puppeteer
     """
-    # Initialize database
-    db = AccessibilityDB()
+    # Initialize database with the specified name
+    db = AccessibilityDB(db_name=db_name, create_if_not_exists=auto_create_db)
     
     # Clear database if requested
     if clear_db:
-        print("Clearing database...")
+        print(f"Clearing database '{db.db_name}'...")
         db.clear_database()
     
     # Collect test documentation from all modules
@@ -436,10 +443,14 @@ async def process_urls(file_path, screenshots_dir, results_file, max_pages, clea
 @click.option('--max-pages', '-m', type=int, default=None,
               help='Maximum number of pages to test (default: no limit)')
 @click.option('--clear-db', '-c', is_flag=True,
-              help='Clear database before starting new test run')
+              help='Clear specified database before starting new test run')
 @click.option('--delay', '-d', type=float, default=2.0,
               help='Delay in seconds between page tests (default: 2.0)')
-def main(input_file, screenshots_dir, results_file, max_pages, clear_db, delay):
+@click.option('--database', '-db', default=None,
+              help='MongoDB database name to use (default: accessibility_tests)')
+@click.option('--auto-create-db', '-a', is_flag=True,
+              help='Automatically create the database if it does not exist')
+def main(input_file, screenshots_dir, results_file, max_pages, clear_db, delay, database, auto_create_db):
     """
     Process URLs from INPUT_FILE one at a time and test for accessibility.
     Screenshots will be saved in the specified directory.
@@ -447,6 +458,8 @@ def main(input_file, screenshots_dir, results_file, max_pages, clear_db, delay):
     Optional limit on number of pages to test.
     Optional database clearing before starting.
     Optional delay between page tests.
+    Optional database name to use.
+    Optional automatic creation of database if it does not exist.
     """
     try:
         if platform.system() == 'Windows':
@@ -454,11 +467,11 @@ def main(input_file, screenshots_dir, results_file, max_pages, clear_db, delay):
         
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(process_urls(input_file, screenshots_dir, results_file, max_pages, clear_db, delay))
+        loop.run_until_complete(process_urls(input_file, screenshots_dir, results_file, max_pages, clear_db, delay, database, auto_create_db))
         loop.close()
 
         print("\nAnalyzing common page structure across the site...")
-        structure_analysis = analyze_common_structure()
+        structure_analysis = analyze_common_structure(db_name=database)
         print("Structure analysis complete.")
     except Exception as e:
         print(f"Error: {str(e)}")

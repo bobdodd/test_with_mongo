@@ -7,14 +7,25 @@ from bson import ObjectId
 from datetime import datetime
 import pprint
 
+DEFAULT_DB_NAME = 'accessibility_tests'
+
 class AccessibilityDB:
-    def __init__(self):
+    def __init__(self, db_name=None):
         try:
             self.client = MongoClient('mongodb://localhost:27017/')
-            self.db = self.client['accessibility_tests']
+            
+            # Use the specified database name or default
+            if db_name is None:
+                db_name = DEFAULT_DB_NAME
+                print(f"Warning: No database name specified for structure analysis. Using default database '{DEFAULT_DB_NAME}'.")
+            
+            self.db_name = db_name
+            self.db = self.client[db_name]
             self.test_runs = self.db['test_runs']
             self.page_results = self.db['page_results']
             self.structure_analysis = self.db['structure_analysis']
+            
+            print(f"Structure analysis connected to database: '{db_name}'")
         except Exception as e:
             print(f"Failed to connect to MongoDB: {e}")
             raise
@@ -44,11 +55,14 @@ class AccessibilityDB:
         if hasattr(self, 'client'):
             self.client.close()
 
-def analyze_common_structure():
+def analyze_common_structure(db_name=None):
     """
     Analyze common structural elements by site, then provide an overall summary.
+    
+    Args:
+        db_name (str, optional): Name of the MongoDB database to use. Defaults to None (uses 'accessibility_tests').
     """
-    db = AccessibilityDB()
+    db = AccessibilityDB(db_name=db_name)
     
     # Get the most recent test run ID
     test_run_id = db.get_most_recent_test_run_id()
