@@ -1226,8 +1226,16 @@ def consolidate_responsive_results(breakpoint_results):
             if 'tests' not in results:
                 continue
                 
-            # Get tests for this breakpoint
-            tests = results['tests']
+            # Get tests for this breakpoint - handle nested structure
+            bp_tests = results['tests']
+            
+            # The structure might be bp_tests.tests.test_name due to how we store results
+            tests = bp_tests.get('tests', bp_tests)  # Try to get nested tests, or use the direct object
+            
+            # Ensure we have a dictionary for tests
+            if not isinstance(tests, dict):
+                print(f"Warning: tests data is not a dictionary: {type(tests)}")
+                tests = {}  # Create empty dict to avoid errors
             
             # Process each test type
             for test_name in ['overflow', 'touchTargets', 'fontScaling', 'fixedPosition', 'contentStacking']:
@@ -1235,6 +1243,12 @@ def consolidate_responsive_results(breakpoint_results):
                     continue
                     
                 test_data = tests[test_name]
+                
+                # Ensure test_data is a dictionary
+                if not isinstance(test_data, dict):
+                    print(f"Warning: {test_name} test data is not a dictionary (value: {test_data})")
+                    continue  # Skip this test
+                
                 if 'issues' not in test_data or not test_data['issues']:
                     continue
                     

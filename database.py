@@ -120,6 +120,22 @@ class AccessibilityDB:
         except Exception as e:
             print(f"Error getting page results: {e}")
             return []
+            
+    def get_all_test_runs(self):
+        """Get all test runs"""
+        try:
+            return list(self.test_runs.find().sort("timestamp_start", -1))
+        except Exception as e:
+            print(f"Error getting test runs: {e}")
+            return []
+            
+    def get_latest_test_run(self):
+        """Get the most recent test run"""
+        try:
+            return self.test_runs.find_one({}, sort=[("timestamp_start", -1)])
+        except Exception as e:
+            print(f"Error getting latest test run: {e}")
+            return None
 
     def export_to_json(self, filename, test_run_id):
         """Export results for a specific test run to JSON file"""
