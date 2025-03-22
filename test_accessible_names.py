@@ -1,4 +1,5 @@
 from datetime import datetime
+from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
@@ -727,17 +728,11 @@ async def test_accessible_names(page):
             }
         ''')
 
-        # Print violations with XPaths for debug purposes
-        if names_data['results']['violations']:
-            print("\nAccessibility Violations Found:")
-            for violation in names_data['results']['violations']:
-                print(f"\nElement: {violation['element']}")
-                print(f"Role: {violation['role']}")
-                print(f"Issue: {violation['issue']}")
-                print(f"XPath: {violation['xpath']}")
-                if 'currentName' in violation:
-                    print(f"Current Name: {violation['currentName']}")
-                print("-" * 50)
+        # Add section information to results
+        names_data['results'] = add_section_info_to_test_results(page, names_data['results'])
+        
+        # Print violations with section information for debugging
+        print_violations_with_sections(names_data['results']['violations'])
 
         return {
             'accessible_names': {

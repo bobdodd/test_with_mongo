@@ -62,7 +62,8 @@ async def test_page_accessibility(page):
         print(f"Testing accessibility for: {page.url}")
         results = {
             'url': page.url,
-            'tests': {}
+            'tests': {},
+            'page_structure': None  # Will store page structure for section analysis
         }
         
         # Test for media queries first
@@ -141,10 +142,19 @@ async def test_page_accessibility(page):
         is_homepage = url.endswith('/') or url.endswith('.com') or url.endswith('.ca') or \
                      not any(x in url.split('?')[0].split('/')[-1] for x in ['.', '_', '-'])
 
-        # Run all other tests
-        print("Testing page structure for comment elements...")
+        # Run page structure test first and store it for other tests to use
+        print("Testing page structure for common elements...")
         page_structure_results = await test_page_structure(page)
         results['tests']['page_structure'] = page_structure_results
+        
+        # Store page structure data separately for easy access by other tests
+        results['page_structure'] = page_structure_results.get('page_structure', {})
+        
+        # Store page structure data on the page object itself so test functions can access it
+        # This is a clean way to pass context between test functions without changing all function signatures
+        page._accessibility_context = {
+            'page_structure': page_structure_results.get('page_structure', {})
+        }
 
         print("Testing HTML structure...")
         html_results = await test_html_structure(page, is_homepage)

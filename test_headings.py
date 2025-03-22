@@ -1,4 +1,5 @@
 from datetime import datetime
+from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
@@ -355,6 +356,12 @@ async def test_headings(page):
             }
         ''')
 
+        # Add section information to results
+        headings_data['results'] = add_section_info_to_test_results(page, headings_data['results'])
+        
+        # Print violations with section information for debugging
+        print_violations_with_sections(headings_data['results']['violations'])
+        
         return {
             'headings': {
                 'pageFlags': headings_data['pageFlags'],
