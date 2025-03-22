@@ -75,22 +75,31 @@ async def test_page_accessibility(page):
         
         # Extract breakpoints from the media queries results
         try:
-            if 'media_queries' in media_queries_results and 'responsiveBreakpoints' in media_queries_results['media_queries']:
-                all_breakpoints = media_queries_results['media_queries']['responsiveBreakpoints'].get('allBreakpoints', [])
+            # First try the direct 'breakpoints' property that's in the new data structure
+            if 'breakpoints' in media_queries_results:
+                all_breakpoints = media_queries_results['breakpoints']
                 if all_breakpoints:
                     print(f"Found {len(all_breakpoints)} responsive breakpoints: {all_breakpoints}")
                     responsive_breakpoints = sorted([int(bp) for bp in all_breakpoints])
                 else:
+                    print("No responsive breakpoints found in direct breakpoints")
+            
+            # Backward compatibility check for older structure
+            elif 'media_queries' in media_queries_results and 'responsiveBreakpoints' in media_queries_results['media_queries']:
+                all_breakpoints = media_queries_results['media_queries']['responsiveBreakpoints'].get('allBreakpoints', [])
+                if all_breakpoints:
+                    print(f"Found {len(all_breakpoints)} responsive breakpoints (legacy format): {all_breakpoints}")
+                    responsive_breakpoints = sorted([int(bp) for bp in all_breakpoints])
+                else:
                     print("No responsive breakpoints found in media queries results")
             
-            # Add some default breakpoints if none were found
+            # If no breakpoints were found, log it but don't add default ones
             if not responsive_breakpoints:
-                print("Using default responsive breakpoints")
-                responsive_breakpoints = [320, 480, 768, 1024, 1280]
+                print("No responsive breakpoints found in CSS media queries. Responsive accessibility tests will be skipped.")
+                # No default breakpoints, as we only want to test actual responsive breakpoints
         except Exception as bp_error:
             print(f"Error extracting breakpoints: {str(bp_error)}")
-            # Fall back to default breakpoints
-            responsive_breakpoints = [320, 480, 768, 1024, 1280]
+            # No default breakpoints on error - only want to test actual responsive breakpoints
             
         # Store the original viewport to restore later
         original_viewport = page.viewport
@@ -230,72 +239,91 @@ async def test_page_accessibility(page):
         
         # Add responsive breakpoint testing structure
         # Using our comprehensive responsive accessibility tests
-        print("\n=== STARTING RESPONSIVE BREAKPOINT TESTING ===")
-        
-        # Add breakpoints to results for later use
         results['responsive_testing'] = {
             'breakpoints': responsive_breakpoints,
             'breakpoint_results': {}
         }
         
-        # Test at each breakpoint
-        for i, breakpoint in enumerate(responsive_breakpoints):
-            print(f"\n--- Testing breakpoint {i+1}/{len(responsive_breakpoints)}: {breakpoint}px ---")
+        # Only proceed with responsive testing if breakpoints were found
+        if responsive_breakpoints:
+            print("\n=== STARTING RESPONSIVE BREAKPOINT TESTING ===")
+            print(f"Testing {len(responsive_breakpoints)} breakpoints: {responsive_breakpoints}")
             
-            try:
-                # Set viewport width to the breakpoint
-                print(f"  Setting viewport width to {breakpoint}px")
-                await page.setViewport({
-                    'width': breakpoint,
-                    'height': original_viewport['height'] 
-                })
+            # Test at each breakpoint
+            for i, breakpoint in enumerate(responsive_breakpoints):
+                print(f"\n--- Testing breakpoint {i+1}/{len(responsive_breakpoints)}: {breakpoint}px ---")
                 
-                # Wait for layout to stabilize
-                await asyncio.sleep(0.5)  # 500ms pause
-                
-                # Initialize results for this breakpoint
-                breakpoint_results = {
-                    'breakpoint': breakpoint,
-                    'viewport': {
+                try:
+                    # Set viewport width to the breakpoint
+                    print(f"  Setting viewport width to {breakpoint}px")
+                    await page.setViewport({
                         'width': breakpoint,
-                        'height': original_viewport['height']
-                    },
-                    'tests': {}
-                }
-                
-                # Run comprehensive responsive accessibility tests at this breakpoint
-                print("  Running responsive accessibility tests at this breakpoint...")
-                responsive_results = await test_responsive_accessibility(page, breakpoint)
-                breakpoint_results['tests'] = responsive_results
-                
-                # Store results for this breakpoint
-                results['responsive_testing']['breakpoint_results'][str(breakpoint)] = breakpoint_results
-                
-                # Add a short pause between breakpoints
-                await asyncio.sleep(0.1)
-                
-            except Exception as bp_error:
-                print(f"  ERROR at breakpoint {breakpoint}px: {str(bp_error)}")
-                results['responsive_testing']['breakpoint_results'][str(breakpoint)] = {
-                    'breakpoint': breakpoint,
-                    'error': str(bp_error)
-                }
-        
-        # Consolidate results across all breakpoints
-        print("\n--- Consolidating responsive testing results ---")
-        try:
-            consolidated_results = consolidate_responsive_results(results['responsive_testing']['breakpoint_results'])
-            results['responsive_testing']['consolidated'] = consolidated_results
+                        'height': original_viewport['height'] 
+                    })
+                    
+                    # Wait for layout to stabilize
+                    await asyncio.sleep(0.5)  # 500ms pause
+                    
+                    # Initialize results for this breakpoint
+                    breakpoint_results = {
+                        'breakpoint': breakpoint,
+                        'viewport': {
+                            'width': breakpoint,
+                            'height': original_viewport['height']
+                        },
+                        'tests': {}
+                    }
+                    
+                    # Run comprehensive responsive accessibility tests at this breakpoint
+                    print("  Running responsive accessibility tests at this breakpoint...")
+                    responsive_results = await test_responsive_accessibility(page, breakpoint)
+                    
+                    # Ensure consistent data structure - responsive_results should contain a 'tests' dictionary
+                    if isinstance(responsive_results, dict):
+                        # Store the responsive results in the correct structure
+                        breakpoint_results['tests'] = responsive_results
+                    else:
+                        # Create a proper structure if something went wrong
+                        print(f"  Warning: Unexpected responsive results type: {type(responsive_results)}")
+                        breakpoint_results['tests'] = {
+                            'error': 'Invalid results structure',
+                            'timestamp': datetime.now().isoformat()
+                        }
+                    
+                    # Store results for this breakpoint
+                    results['responsive_testing']['breakpoint_results'][str(breakpoint)] = breakpoint_results
+                    
+                    # Add a short pause between breakpoints
+                    await asyncio.sleep(0.1)
+                    
+                except Exception as bp_error:
+                    print(f"  ERROR at breakpoint {breakpoint}px: {str(bp_error)}")
+                    results['responsive_testing']['breakpoint_results'][str(breakpoint)] = {
+                        'breakpoint': breakpoint,
+                        'error': str(bp_error)
+                    }
             
-            # Add summary to main results
-            print(f"  Found {consolidated_results.get('summary', {}).get('totalIssues', 0)} responsive accessibility issues across {consolidated_results.get('summary', {}).get('affectedBreakpoints', 0)} breakpoints")
-            
-        except Exception as consolidation_error:
-            print(f"  ERROR consolidating results: {str(consolidation_error)}")
-            results['responsive_testing']['consolidated'] = {
-                'error': str(consolidation_error),
-                'timestamp': datetime.now().isoformat()
-            }
+            # Consolidate results across all breakpoints
+            print("\n--- Consolidating responsive testing results ---")
+            try:
+                consolidated_results = consolidate_responsive_results(results['responsive_testing']['breakpoint_results'])
+                results['responsive_testing']['consolidated'] = consolidated_results
+                
+                # Add summary to main results
+                print(f"  Found {consolidated_results.get('summary', {}).get('totalIssues', 0)} responsive accessibility issues across {consolidated_results.get('summary', {}).get('affectedBreakpoints', 0)} breakpoints")
+                
+            except Exception as consolidation_error:
+                print(f"  ERROR consolidating results: {str(consolidation_error)}")
+                results['responsive_testing']['consolidated'] = {
+                    'error': str(consolidation_error),
+                    'timestamp': datetime.now().isoformat()
+                }
+        else:
+            # No breakpoints found, add information to results but skip testing
+            print("\n=== SKIPPING RESPONSIVE BREAKPOINT TESTING (NO BREAKPOINTS FOUND) ===")
+            results['responsive_testing']['status'] = 'skipped'
+            results['responsive_testing']['reason'] = 'No CSS media query breakpoints found'
+            results['responsive_testing']['timestamp'] = datetime.now().isoformat()
         
         # Restore original viewport
         print("\n--- Restoring original viewport ---")
@@ -331,43 +359,7 @@ def collect_test_documentation():
     documentation['headings'] = HEADINGS_DOCS
     documentation['responsive_accessibility'] = RESPONSIVE_DOCS
     
-    # Get the current module directory
-    module_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Attempt to dynamically discover and import additional test modules
-    print(f"Searching for test modules in: {module_dir}")
-    
-    try:
-        for filename in os.listdir(module_dir):
-            if filename.startswith('test_') and filename.endswith('.py'):
-                module_name = filename[:-3]  # Remove .py extension
-                
-                # Skip modules we've already imported manually
-                if module_name in ['test_media_queries', 'test_page_structure', 'test_accessible_names', 
-                                  'test_focus_management', 'test_images', 'test_tables', 
-                                  'test_headings', 'test_responsive_accessibility']:
-                    continue
-                
-                print(f"Checking {module_name} for TEST_DOCUMENTATION...")
-                
-                try:
-                    # Import the module if not already imported
-                    if module_name not in sys.modules:
-                        module = importlib.import_module(f".{module_name}", package=__package__)
-                    else:
-                        module = sys.modules[f"{__package__}.{module_name}"]
-                    
-                    # Check if the module has a TEST_DOCUMENTATION attribute
-                    if hasattr(module, 'TEST_DOCUMENTATION'):
-                        # Extract the test name (remove 'test_' prefix)
-                        test_name = module_name[5:] if module_name.startswith('test_') else module_name
-                        documentation[test_name] = module.TEST_DOCUMENTATION
-                        print(f"Found documentation for {test_name}")
-                except Exception as e:
-                    print(f"Error checking {module_name}: {e}")
-    except Exception as e:
-        print(f"Error scanning test directory: {e}")
-    
+    # Just return what we've manually imported to simplify the testing process
     print(f"Collected documentation for {len(documentation)} tests")
     return documentation
 
