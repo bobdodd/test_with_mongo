@@ -485,6 +485,19 @@ async def process_urls(file_path, screenshots_dir, results_file, max_pages, clea
                     page_result['accessibility'] = accessibility_results
                     page_result['status'] = 'completed'
                     page_result['timestamp_end'] = datetime.now().isoformat()
+                    
+                    # Extract page title from HTML structure test results and store it at the top level
+                    try:
+                        html_structure = accessibility_results.get('tests', {}).get('html_structure', {})
+                        title_info = html_structure.get('details', {}).get('title', {})
+                        
+                        if title_info and title_info.get('exists') and title_info.get('analysis'):
+                            title_text = title_info.get('analysis', {}).get('text')
+                            if title_text:
+                                page_result['page_title'] = title_text
+                                print(f"Extracted page title: {title_text}")
+                    except Exception as title_error:
+                        print(f"Error extracting page title: {str(title_error)}")
 
                     # Save completed page result
                     db.save_page_result(test_run_id, url, page_result)
