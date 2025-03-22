@@ -121,6 +121,23 @@ class AccessibilityDB:
             print(f"Error getting page results: {e}")
             return []
             
+    def get_page_result(self, test_run_id, url):
+        """Get a specific page result by test_run_id and URL"""
+        try:
+            result = self.page_results.find_one(
+                {
+                    'test_run_id': test_run_id,
+                    'url': url
+                },
+                {'_id': 0}
+            )
+            if result:
+                return result.get('results', {})
+            return None
+        except Exception as e:
+            print(f"Error getting page result for URL {url}: {e}")
+            return None
+            
     def get_all_test_runs(self):
         """Get all test runs"""
         try:

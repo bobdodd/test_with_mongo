@@ -1,6 +1,19 @@
 from datetime import datetime
 import re
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Image Accessibility Analysis",
@@ -76,12 +89,36 @@ async def test_images(page):
     try:
         images_data = await page.evaluate('''
             () => {
+                // Function to generate XPath for elements
+                function getFullXPath(element) {
+                    if (!element) return '';
+                    
+                    function getElementIdx(el) {
+                        let count = 1;
+                        for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                            if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                                count++;
+                            }
+                        }
+                        return count;
+                    }
+
+                    let path = '';
+                    while (element && element.nodeType === 1) {
+                        let idx = getElementIdx(element);
+                        let tagName = element.tagName.toLowerCase();
+                        path = `/${tagName}[${idx}]${path}`;
+                        element = element.parentNode;
+                    }
+                    return path;
+                }
+                
                 function validateAltText(alt, src) {
-                    if (alt === null) return { valid: false, reason: 'Missing alt attribute' };
+                    if (alt === null) return { valid: false, reason: 'Missing alt attribute'  };
                     
                     // Check for HTML tags
                     if (/<[^>]*>/g.test(alt)) {
-                        return { valid: false, reason: 'Contains HTML elements' };
+                        return { valid: false, reason: 'Contains HTML elements'  };
                     }
 
                     // Trim the alt text
@@ -89,17 +126,17 @@ async def test_images(page):
 
                     // Check for empty string (which is valid in some cases)
                     if (trimmedAlt === '') {
-                        return { valid: true, isDecorative: true };
+                        return { valid: true, isDecorative: true  };
                     }
 
                     // Check for whitespace only
                     if (!trimmedAlt) {
-                        return { valid: false, reason: 'Contains only whitespace' };
+                        return { valid: false, reason: 'Contains only whitespace'  };
                     }
 
                     // Check for punctuation only
                     if (/^[.,/#!$%^&*;:{}=\-_`~()]+$/.test(trimmedAlt)) {
-                        return { valid: false, reason: 'Contains only punctuation' };
+                        return { valid: false, reason: 'Contains only punctuation'  };
                     }
 
                     // Check if it's just a URL or filename
@@ -107,15 +144,15 @@ async def test_images(page):
                     if (urlPattern.test(trimmedAlt) || 
                         trimmedAlt.toLowerCase() === src.toLowerCase() ||
                         src.toLowerCase().includes(trimmedAlt.toLowerCase())) {
-                        return { valid: false, reason: 'Appears to be URL or filename' };
+                        return { valid: false, reason: 'Appears to be URL or filename'  };
                     }
 
                     // Check length
                     if (trimmedAlt.length > 200) {
-                        return { valid: false, reason: 'Exceeds 200 characters' };
+                        return { valid: false, reason: 'Exceeds 200 characters'  };
                     }
 
-                    return { valid: true, isDecorative: false };
+                    return { valid: true, isDecorative: false  };
                 }
 
                 const results = {
@@ -158,7 +195,8 @@ async def test_images(page):
                         linkHref: parentAnchor ? parentAnchor.href : null,
                         linkText: parentAnchor ? parentAnchor.textContent.trim() : null,
                         isDecorative: altValidation.isDecorative,
-                        altValidation: altValidation
+                        altValidation: altValidation,
+                        xpath: getFullXPath(img) // Add XPath for section identification
                     };
 
                     results.images.push(imageInfo);
@@ -168,7 +206,9 @@ async def test_images(page):
                         results.violations.push({
                             element: imageInfo.tag,
                             src: src,
-                            issue: 'Missing alt attribute'
+                            issue: 'Missing alt attribute',
+                            xpath: imageInfo.xpath,
+                            description: 'Image is missing an alt attribute, which is required for screen reader users'
                         });
                         results.summary.missingAlt++;
                     } else if (!altValidation.valid) {
@@ -176,7 +216,9 @@ async def test_images(page):
                             element: imageInfo.tag,
                             src: src,
                             issue: `Invalid alt text: ${altValidation.reason}`,
-                            alt: alt
+                            alt: alt,
+                            xpath: imageInfo.xpath,
+                            description: `Image has invalid alt text (${alt}): ${altValidation.reason}`
                         });
                         results.summary.invalidAlt++;
                     }
@@ -188,7 +230,9 @@ async def test_images(page):
                         results.violations.push({
                             element: 'svg',
                             src: src,
-                            issue: 'Non-interactive SVG missing role="img"'
+                            issue: 'Non-interactive SVG missing role="img"',
+                            xpath: imageInfo.xpath,
+                            description: 'SVG element should have role="img" to be properly announced by screen readers'
                         });
                         results.summary.missingRole++;
                     }
@@ -212,12 +256,18 @@ async def test_images(page):
                             invalidAlt: results.summary.invalidAlt,
                             missingRole: results.summary.missingRole,
                             decorativeImages: results.summary.decorativeImages
-                        }
+                         }
                     },
                     results: results
                 };
             }
         ''')
+
+        # Add section information to results
+        images_data['results'] = add_section_info_to_test_results(page, images_data['results'])
+        
+        # Print violations with section information for debugging
+        print_violations_with_sections(images_data['results']['violations'])
 
         return {
             'images': {
@@ -225,7 +275,7 @@ async def test_images(page):
                 'details': images_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -243,7 +293,7 @@ async def test_images(page):
                         'invalidAlt': 0,
                         'missingRole': 0,
                         'decorativeImages': 0
-                    }
+                     }
                 },
                 'details': {
                     'images': [],

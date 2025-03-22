@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Digital Maps Accessibility Analysis",
@@ -74,7 +87,32 @@ async def test_maps(page):
     """
     try:
         maps_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 function identifyMapProvider(src) {
                     const srcLower = src.toLowerCase();
                     if (srcLower.includes('google.com/maps')) return 'Google Maps';
@@ -149,6 +187,8 @@ async def test_maps(page):
                     if (!title) {
                         results.summary.mapsWithoutTitle++;
                         results.violations.push({
+
+                            xpath: getFullXPath(element),
                             type: 'missing-title',
                             provider: provider,
                             src: iframe.src
@@ -158,6 +198,8 @@ async def test_maps(page):
                     if (ariaHidden === 'true') {
                         results.summary.mapsWithAriaHidden++;
                         results.violations.push({
+
+                            xpath: getFullXPath(element),
                             type: 'aria-hidden',
                             provider: provider,
                             src: iframe.src,
@@ -202,6 +244,8 @@ async def test_maps(page):
                     // Check for accessibility attributes on div-based maps
                     if (!div.getAttribute('aria-label') && !div.getAttribute('role')) {
                         results.violations.push({
+
+                            xpath: getFullXPath(element),
                             type: 'div-map-missing-attributes',
                             provider: provider,
                             element: `div#${div.id || ''}.${div.className}`
@@ -221,12 +265,20 @@ async def test_maps(page):
                             mapsByProvider: results.summary.mapsByProvider,
                             mapsWithoutTitle: results.summary.mapsWithoutTitle,
                             mapsWithAriaHidden: results.summary.mapsWithAriaHidden
-                        }
+                         }
                     },
                     results: results
                 };
             }
         ''')
+
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
 
         return {
             'maps': {
@@ -234,7 +286,7 @@ async def test_maps(page):
                 'details': maps_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:

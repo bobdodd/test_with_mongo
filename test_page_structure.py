@@ -11,6 +11,18 @@ Improvements:
 - More detailed analysis of element relationships and containment
 """
 
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Page Structure Analysis",
@@ -152,6 +164,7 @@ TEST_DOCUMENTATION = {
 import json
 from datetime import datetime
 
+
 async def test_page_structure(page):
     """
     Analyze the structure of the page to identify header, footer, and other
@@ -166,7 +179,33 @@ async def test_page_structure(page):
     print("Analyzing page structure...")
     
     # Get the page structure using client-side JS
-    structure_data = await page.evaluate('''() => {
+    structure_data = await page.evaluate('''
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
         function analyzePageStructure() {
             // Get viewport dimensions
             const viewportHeight = window.innerHeight;
@@ -398,7 +437,7 @@ async def test_page_structure(page):
                     buttons: element.querySelectorAll('button, input[type="button"], input[type="submit"]').length,
                     inputs: element.querySelectorAll('input:not([type="button"]):not([type="submit"]), select, textarea').length,
                     images: element.querySelectorAll('img, svg').length
-                };
+                 };
             }
             
             // Find all header candidates with enhanced detection
@@ -1410,7 +1449,7 @@ async def test_page_structure(page):
                     sidebars: Array.from(document.querySelectorAll(
                         'aside, [role="complementary"], [class*="sidebar"], [id*="sidebar"]'
                     )).map(element => getElementDetails(element, true))
-                };
+                 };
             }
             
             // Find recurring elements across pages
@@ -1441,7 +1480,7 @@ async def test_page_structure(page):
                     forms: Array.from(document.querySelectorAll(
                         'form, [role="form"]'
                     )).map(element => getElementDetails(element, true))
-                };
+                 };
             }
             
             // Find common content blocks across pages
@@ -1685,7 +1724,7 @@ async def test_page_structure(page):
                 viewport: {
                     width: viewportWidth,
                     height: viewportHeight
-                },
+                 },
                 documentHeight: documentHeight,
                 structure: {
                     headers: findHeaderCandidates(),
@@ -1878,6 +1917,14 @@ async def test_page_structure(page):
     }
     
     # Return complete test results with documentation
+    # Add section information to results
+
+    data['results'] = add_section_info_to_test_results(page, data['results'])
+
+    # Print violations with section information for debugging
+
+    print_violations_with_sections(data['results']['violations'])
+
     return {
         'page_structure': {
             'timestamp': datetime.now().isoformat(),
@@ -1896,7 +1943,7 @@ async def test_page_structure(page):
                 'recurringElements': recurring_elements_summary,
                 'repetitivePatterns': repetitive_patterns_summary,
                 'forms': forms_summary
-            },
+             },
             'keyElements': key_elements,
             'complexityData': complexity_data,
             'interactiveElements': interactive_elements,

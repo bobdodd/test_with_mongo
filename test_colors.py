@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Color and Contrast Analysis",
@@ -99,7 +112,32 @@ async def test_colors(page):
     """
     try:
         color_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 // Color utility functions
                 function getLuminance(r, g, b) {
                     const [rs, gs, bs] = [r, g, b].map(c => {
@@ -411,12 +449,20 @@ async def test_colors(page):
                             nonTextContrastViolations: results.summary.nonTextContrastViolations,
                             colorReferences: results.summary.colorReferenceCount,
                             adjacentContrastViolations: results.summary.adjacentContrastViolations
-                        }
+                         }
                     },
                     results: results
                 }
             }
         ''')
+
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
 
         return {
             'colors': {
@@ -424,7 +470,7 @@ async def test_colors(page):
                 'details': color_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -446,7 +492,7 @@ async def test_colors(page):
                         'nonTextContrastViolations': 0,
                         'colorReferences': 0,
                         'adjacentContrastViolations': 0
-                    }
+                     }
                 },
                 'details': {
                     'mediaQueries': {

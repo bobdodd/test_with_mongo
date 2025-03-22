@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "HTML Structure Analysis",
@@ -103,7 +116,7 @@ async def test_html_structure(page, is_homepage=False):
                         parts: parts.map(p => p.trim()).filter(p => p),
                         isValid: hasWords && titleText.length > 0,
                         followsPattern: !isHomepage && parts.length > 1
-                    };
+                     };
                 }
 
                 // Get doctype
@@ -129,7 +142,7 @@ async def test_html_structure(page, is_homepage=False):
                     doctype: {
                         exists: !!doctype,
                         info: doctypeInfo
-                    },
+                     },
                     language: {
                         lang: lang,
                         xmlLang: xmlLang,
@@ -199,6 +212,14 @@ async def test_html_structure(page, is_homepage=False):
                 'message': 'Title does not follow pattern: page title <delimiter> site name'
             })
 
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
+
         return {
             'html_structure': {
                 'tests': results['tests'],
@@ -206,7 +227,7 @@ async def test_html_structure(page, is_homepage=False):
                 'violations': results['violations'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -219,7 +240,7 @@ async def test_html_structure(page, is_homepage=False):
                     'hasValidLang': False,
                     'hasValidTitle': False,
                     'hasMatchingLangs': False
-                },
+                 },
                 'details': None,
                 'violations': [{
                     'type': 'error',

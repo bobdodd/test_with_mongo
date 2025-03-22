@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 # Test documentation with information about the text resize test
 TEST_DOCUMENTATION = {
     "testName": "Text Resize Test",
@@ -56,14 +57,54 @@ TEST_DOCUMENTATION = {
     ]
 }
 
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 async def test_text_resize(page):
     """
     Test text resize to 200% without content loss or overlap
     """
     try:
+        # Save original viewport to restore later
+        original_viewport = await page.evaluate('() => { return {width: window.innerWidth, height: window.innerHeight}; }')
+        
         # First get the media query breakpoints
         breakpoints = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 const breakpoints = [];
                 for (const sheet of document.styleSheets) {
                     try {
@@ -106,7 +147,32 @@ async def test_text_resize(page):
 
             # Analyze text elements and test resizing
             viewport_result = await page.evaluate('''
-                () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                     function getXPath(element) {
                         if (element.id !== '') {
                             return `//*[@id="${element.id}"]`;
@@ -242,7 +308,7 @@ async def test_text_resize(page):
                         overlaps: results.overlaps,
                         truncated: results.truncated,
                         totalElementsTested: textElements.length
-                    };
+                     };
                 }
             ''')
 
@@ -250,6 +316,25 @@ async def test_text_resize(page):
                 'viewport': viewport,
                 'results': viewport_result
             })
+
+        # Create data structure for section reporting
+        data = {
+            'results': {
+                'violations': recommendations if 'recommendations' in locals() else [],
+                'summary': {}
+            }
+        }
+        
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
+
+        # Restore original viewport
+        await page.setViewport(original_viewport)
 
         return {
             'textResize': {
@@ -261,15 +346,21 @@ async def test_text_resize(page):
                             1 for r in resize_results if r['results']['hasIssues']
                         ),
                         'totalElementsTested': resize_results[0]['results']['totalElementsTested']
-                    }
+                     }
                 },
                 'results': resize_results,
                 'timestamp': datetime.now().isoformat(),
-                'documentation': TEST_DOCUMENTATION
-            }
+                'documentation': TEST_DOCUMENTATION }
         }
 
     except Exception as e:
+        # Try to restore original viewport even after exception
+        try:
+            if 'original_viewport' in locals():
+                await page.setViewport(original_viewport)
+        except:
+            pass  # Don't let viewport restoration failure mask the original error
+            
         return {
             'error': str(e),
             'timestamp': datetime.now().isoformat(),
@@ -280,10 +371,9 @@ async def test_text_resize(page):
                         'totalViewportsTested': 0,
                         'viewportsWithIssues': 0,
                         'totalElementsTested': 0
-                    }
+                     }
                 },
                 'results': [],
                 'timestamp': datetime.now().isoformat(),
-                'documentation': TEST_DOCUMENTATION
-            }
+                'documentation': TEST_DOCUMENTATION }
         }

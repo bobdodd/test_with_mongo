@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 # Test documentation with information about the title attribute test
 TEST_DOCUMENTATION = {
     "testName": "Title Attribute Test",
@@ -27,13 +28,50 @@ TEST_DOCUMENTATION = {
     ]
 }
 
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 async def test_title_attribute(page):
     """
     Test proper usage of title attribute - should only be used on iframes
     """
     try:
         title_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 function analyzeTitleAttributes() {
                     const elementsWithTitle = Array.from(document.querySelectorAll('[title]'))
                     const improperTitleUse = []
@@ -69,7 +107,7 @@ async def test_title_attribute(page):
                             totalTitleAttributes: elementsWithTitle.length,
                             improperUseCount: improperTitleUse.length,
                             properUseCount: properTitleUse.length
-                        }
+                         }
                     }
                 }
 
@@ -82,7 +120,7 @@ async def test_title_attribute(page):
                             totalTitleAttributes: titleResults.summary.totalTitleAttributes,
                             improperUseCount: titleResults.summary.improperUseCount,
                             properUseCount: titleResults.summary.properUseCount
-                        }
+                         }
                     },
                     results: {
                         improperUse: titleResults.improperTitleUse,
@@ -98,13 +136,20 @@ async def test_title_attribute(page):
             }
         ''')
 
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
+
         return {
             'titleAttribute': {
                 'pageFlags': title_data['pageFlags'],
                 'details': title_data['results'],
                 'timestamp': datetime.now().isoformat(),
-                'documentation': TEST_DOCUMENTATION
-            }
+                'documentation': TEST_DOCUMENTATION }
         }
 
     except Exception as e:
@@ -118,7 +163,7 @@ async def test_title_attribute(page):
                         'totalTitleAttributes': 0,
                         'improperUseCount': 0,
                         'properUseCount': 0
-                    }
+                     }
                 },
                 'details': {
                     'improperUse': [],
@@ -128,6 +173,5 @@ async def test_title_attribute(page):
                         'details': str(e)
                     }]
                 },
-                'documentation': TEST_DOCUMENTATION
-            }
+                'documentation': TEST_DOCUMENTATION }
         }

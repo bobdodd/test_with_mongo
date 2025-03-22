@@ -2,7 +2,18 @@
 Template for adding section reporting to test modules
 """
 from datetime import datetime
-from page_section_util import enrich_violations_with_section_info
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.page_section_util import enrich_violations_with_section_info
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .page_section_util import enrich_violations_with_section_info
+    except ImportError:
+        # Fallback to non-relative import 
+        from page_section_util import enrich_violations_with_section_info
+
 
 def add_section_info_to_test_results(page, test_results):
     """

@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Modal Dialog Accessibility Analysis",
@@ -74,7 +87,32 @@ async def test_modals(page):
     """
     try:
         modals_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 function findModals() {
                     const dialogElements = Array.from(document.querySelectorAll('dialog'))
                     const roleDialogs = Array.from(document.querySelectorAll('[role="dialog"]'))
@@ -94,7 +132,7 @@ async def test_modals(page):
                         return {
                             hasProperHeading: false,
                             firstElement: firstElement ? firstElement.tagName.toLowerCase() : null
-                        }
+                         }
                     }
 
                     return {
@@ -102,7 +140,7 @@ async def test_modals(page):
                         heading: {
                             level: firstElement.tagName.toLowerCase(),
                             text: firstElement.textContent.trim()
-                        }
+                         }
                     }
                 }
 
@@ -222,7 +260,7 @@ async def test_modals(page):
                             element: focusableElements[0].tagName.toLowerCase(),
                             id: focusableElements[0].id,
                             text: focusableElements[0].textContent.trim()
-                        } : null,
+                         } : null,
                         totalFocusable: focusableElements.length
                     }
                 }
@@ -317,12 +355,20 @@ async def test_modals(page):
                             modalsWithoutClose: results.summary.modalsWithoutClose,
                             modalsWithoutFocusManagement: results.summary.modalsWithoutFocusManagement,
                             modalsWithoutProperHeading: results.summary.modalsWithoutProperHeading
-                        }
+                         }
                     },
                     results: results
                 }
             }
         ''')
+
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
 
         return {
             'modals': {
@@ -330,7 +376,7 @@ async def test_modals(page):
                 'details': modals_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -347,7 +393,7 @@ async def test_modals(page):
                         'modalsWithoutClose': 0,
                         'modalsWithoutFocusManagement': 0,
                         'modalsWithoutProperHeading': 0
-                    }
+                     }
                 },
                 'details': {
                     'modals': [],

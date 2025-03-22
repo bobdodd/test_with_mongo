@@ -1,6 +1,19 @@
 import asyncio
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "JavaScript Timer Control Analysis",
@@ -66,7 +79,32 @@ async def test_timers(page):
     try:
         # First inject the timer tracking code and immediately execute tracking setup
         await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 // Create global tracking object
                 window._timerTracking = {
                     timers: new Map(),
@@ -125,7 +163,32 @@ async def test_timers(page):
 
         # Now analyze the timers and their controls
         timer_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 // Verify tracking object exists
                 if (!window._timerTracking) {
                     return {
@@ -137,7 +200,7 @@ async def test_timers(page):
                                 totalTimers: 0,
                                 autoStartTimers: 0,
                                 timersWithoutControls: 0
-                            }
+                             }
                         },
                         results: {
                             timers: [],
@@ -237,6 +300,8 @@ async def test_timers(page):
                         results.timers.length - results.controls.length;
                     
                     results.violations.push({
+
+                        xpath: getFullXPath(element),
                         type: 'timers-without-controls',
                         count: results.summary.timersWithoutControls,
                         details: 'Some timers lack interactive controls'
@@ -246,6 +311,8 @@ async def test_timers(page):
                 // Add violation for auto-start timers
                 if (results.summary.autoStartTimers > 0) {
                     results.violations.push({
+
+                        xpath: getFullXPath(element),
                         type: 'auto-start-timers',
                         count: results.summary.autoStartTimers,
                         details: 'Timers start automatically on page load'
@@ -261,12 +328,20 @@ async def test_timers(page):
                             totalTimers: results.summary.totalTimers,
                             autoStartTimers: results.summary.autoStartTimers,
                             timersWithoutControls: results.summary.timersWithoutControls
-                        }
+                         }
                     },
                     results: results
                 };
             }
         ''')
+
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
 
         return {
             'timers': {
@@ -274,7 +349,7 @@ async def test_timers(page):
                 'details': timer_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -290,7 +365,7 @@ async def test_timers(page):
                         'totalTimers': 0,
                         'autoStartTimers': 0,
                         'timersWithoutControls': 0
-                    }
+                     }
                 },
                 'details': {
                     'timers': [],

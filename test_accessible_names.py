@@ -1,5 +1,16 @@
 from datetime import datetime
-from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
@@ -93,8 +104,8 @@ async def test_accessible_names(page):
                         inherited: {
                             visitedNodes: [],
                             nodesUsed: new Set(),
-                            rulesApplied: new Set(),
-                        },
+                            rulesApplied: new Set()
+                        }
                     };
                 }
 
@@ -146,7 +157,7 @@ async def test_accessible_names(page):
                         return element.closest(selector);
                     }
                 }
-                                         
+                                     
                 function resolveValidAriaLabelledbyIdrefs(elem) {
                     const idrefs = elem.getAttribute('aria-labelledby')?.split(' ') ?? [];
                     const validElems = [];
@@ -349,7 +360,7 @@ async def test_accessible_names(page):
 
                     return false;
                 }
-                                         
+                                     
                 function rule2D(node, context = getDefaultContext()) {
                     // Handle SVG title
                     if (node instanceof SVGElement) {
@@ -510,7 +521,7 @@ async def test_accessible_names(page):
                     'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup',
                     'template', 'textarea', 'time', 'tt', 'u', 'var', 'video', 'wbr'
                 ];
-                                         
+                                     
                 function getCssContent(elem, pseudoElementName) {
                     const computedStyle = window.getComputedStyle(elem, pseudoElementName);
                     const cssContent = computedStyle.content;
@@ -525,7 +536,7 @@ async def test_accessible_names(page):
                     }
                     
                     return '';
-                }                                         
+                }                                     
 
                 function rule2F(node, context = getDefaultContext()) {
                     if (!(node instanceof HTMLElement)) {
@@ -576,7 +587,7 @@ async def test_accessible_names(page):
                     const result = (cssBeforeContent + accumulatedText + cssAfterContent).trim();
                     return result || null;
                 }
-                                         
+                                     
                 function rule2G(node) {
                     if (node.nodeType === Node.TEXT_NODE) {
                         return node.textContent?.replace(/\s\s+/g, ' ') ?? '';
@@ -614,7 +625,7 @@ async def test_accessible_names(page):
                             return {
                                 name: result,
                                 nodesUsed: context.inherited.nodesUsed,
-                                rulesApplied: context.inherited.rulesApplied,
+                                rulesApplied: context.inherited.rulesApplied
                             };
                         }
                     }
@@ -622,7 +633,7 @@ async def test_accessible_names(page):
                     return {
                         name: '',
                         nodesUsed: context.inherited.nodesUsed,
-                        rulesApplied: context.inherited.rulesApplied,
+                        rulesApplied: context.inherited.rulesApplied
                     };
                 }
 

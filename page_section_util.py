@@ -176,22 +176,42 @@ def enrich_violations_with_section_info(violations, page_structure_data):
     Returns:
         list: The same violations with added 'section' field
     """
+    # If no violations, return an empty list
+    if not violations:
+        return []
+        
+    # If not a list, try to convert it or return empty list
+    if not isinstance(violations, list):
+        try:
+            if isinstance(violations, dict) and 'items' in violations:
+                violations = list(violations.items())
+            else:
+                print(f"Warning: violations is not a list, it's a {type(violations)}")
+                return []
+        except:
+            return []
+    
     enriched_violations = []
     
     for violation in violations:
-        if 'xpath' in violation:
+        # Skip non-dictionary violations
+        if not isinstance(violation, dict):
+            continue
+            
+        # Create a copy to avoid modifying the original
+        enriched_violation = violation.copy()
+        
+        if 'xpath' in violation and violation['xpath']:
             section = categorize_element_by_section(violation['xpath'], page_structure_data)
-            # Create a copy of the violation with section info added
-            enriched_violation = violation.copy()
             enriched_violation['section'] = section
-            enriched_violations.append(enriched_violation)
         else:
             # If no xpath, can't determine section
-            violation['section'] = {
+            enriched_violation['section'] = {
                 'section_type': 'unknown',
                 'section_name': 'Unknown Section',
                 'primary': False
             }
-            enriched_violations.append(violation)
+        
+        enriched_violations.append(enriched_violation)
     
     return enriched_violations

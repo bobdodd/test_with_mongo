@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Navigation Menu Analysis",
@@ -75,7 +88,32 @@ async def test_menus(page):
     """
     try:
         menu_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 function getAccessibleName(element) {
                     // Get accessible name following ARIA naming precedence
                     if (element.getAttribute('aria-labelledby')) {
@@ -112,7 +150,7 @@ async def test_menus(page):
                             return {
                                 type: landmarks.includes(tagName) ? tagName : role,
                                 name: getAccessibleName(current)
-                            };
+                             };
                         }
                         current = current.parentElement;
                     }
@@ -214,7 +252,7 @@ async def test_menus(page):
                             invalidRoleCount: invalidRoles.length,
                             menusWithoutNames: menus.filter(m => !m.accessibleName).length,
                             menusWithoutCurrent: menus.filter(m => !m.hasCurrentItem).length
-                        },
+                         },
                         details: {
                             menus,
                             invalidRoles,
@@ -238,12 +276,20 @@ async def test_menus(page):
                             invalidRoles: menuResults.summary.invalidRoleCount,
                             unnamedMenus: menuResults.summary.menusWithoutNames,
                             menusWithoutCurrent: menuResults.summary.menusWithoutCurrent
-                        }
+                         }
                     },
                     results: menuResults.details
                 };
             }
         ''')
+
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
 
         return {
             'menus': {
@@ -251,7 +297,7 @@ async def test_menus(page):
                 'details': menu_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -269,7 +315,7 @@ async def test_menus(page):
                         'invalidRoles': 0,
                         'unnamedMenus': 0,
                         'menusWithoutCurrent': 0
-                    }
+                     }
                 },
                 'details': {
                     'menus': [],

@@ -1,7 +1,20 @@
 from datetime import datetime
+
 import traceback
 import asyncio  # Use asyncio for asynchronous sleep
 
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Floating Dialog Accessibility Analysis",
@@ -158,8 +171,8 @@ async def test_floating_dialogs(page):
 
         # Get current viewport size to restore later
         print("Step 2: Getting current viewport size")
-        # Access viewport as a property, not calling it as a function
-        original_viewport = page.viewport
+        # Get viewport dimensions directly
+        original_viewport = await page.evaluate('() => ({ width: window.innerWidth, height: window.innerHeight })')
         print(f"Original viewport: {original_viewport}")
         
         # Initialize results container for all breakpoints
@@ -851,7 +864,10 @@ async def test_floating_dialogs(page):
         try:
             if 'original_viewport' in locals():
                 print("Attempting to restore viewport after error")
-                await page.setViewport(original_viewport)
+                await page.setViewport({
+                    'width': original_viewport['width'], 
+                    'height': original_viewport['height']
+                })
                 print("Viewport restored")
         except Exception as restore_error:
             print(f"Error restoring viewport: {str(restore_error)}")

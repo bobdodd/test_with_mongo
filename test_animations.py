@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "CSS Animations Analysis",
@@ -61,6 +74,30 @@ async def test_animations(page):
     try:
         animation_data = await page.evaluate('''
             () => {
+                // Function to generate XPath for elements
+                function getFullXPath(element) {
+                    if (!element) return '';
+                    
+                    function getElementIdx(el) {
+                        let count = 1;
+                        for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                            if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                                count++;
+                            }
+                        }
+                        return count;
+                    }
+
+                    let path = '';
+                    while (element && element.nodeType === 1) {
+                        let idx = getElementIdx(element);
+                        let tagName = element.tagName.toLowerCase();
+                        path = `/${tagName}[${idx}]${path}`;
+                        element = element.parentNode;
+                    }
+                    return path;
+                }
+                
                 function getAnimationDetails(styleSheet) {
                     const animations = [];
                     try {
@@ -144,6 +181,7 @@ async def test_animations(page):
                                 tag: element.tagName.toLowerCase(),
                                 id: element.id || null,
                                 class: element.className || null,
+                                xpath: getFullXPath(element),
                                 animation: {
                                     name: style.animationName,
                                     duration: style.animationDuration,
@@ -156,7 +194,7 @@ async def test_animations(page):
                     
                     return elements;
                 }
-                                             
+                                         
                 const results = {
                     styleSheets: Array.from(document.styleSheets).map(sheet => sheet.href || 'inline'),
                     animations: [],
@@ -196,6 +234,7 @@ async def test_animations(page):
                 if (results.summary.totalAnimations > 0 && !results.summary.hasReducedMotionSupport) {
                     results.violations.push({
                         type: 'no-reduced-motion-support',
+                        issue: 'Animations present without prefers-reduced-motion media query',
                         details: 'Animations present without prefers-reduced-motion media query'
                     });
                 }
@@ -208,7 +247,10 @@ async def test_animations(page):
                             type: 'infinite-animation',
                             element: element.tag,
                             id: element.id,
-                            class: element.class
+                            class: element.class,
+                            xpath: element.xpath,
+                            issue: 'Infinite animation can cause accessibility issues',
+                            description: `Element has an infinite animation (animation-iteration-count: infinite) which can cause issues for users with vestibular disorders`
                         });
                     }
 
@@ -221,6 +263,9 @@ async def test_animations(page):
                             element: element.tag,
                             id: element.id,
                             class: element.class,
+                            xpath: element.xpath,
+                            issue: 'Animation duration exceeds 5 seconds',
+                            description: `Long animation duration (${element.animation.duration}) which can be distracting or disorienting`,
                             duration: element.animation.duration
                         });
                     }
@@ -238,12 +283,18 @@ async def test_animations(page):
                             infiniteAnimations: results.summary.infiniteAnimations,
                             longDurationAnimations: results.summary.longDurationAnimations,
                             hasReducedMotionSupport: results.summary.hasReducedMotionSupport
-                        }
+                         }
                     },
                     results: results
                 };
             }
         ''')
+
+        # Add section information to results
+        animation_data['results'] = add_section_info_to_test_results(page, animation_data['results'])
+        
+        # Print violations with section information for debugging
+        print_violations_with_sections(animation_data['results']['violations'])
 
         return {
             'animations': {
@@ -251,7 +302,7 @@ async def test_animations(page):
                 'details': animation_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -269,7 +320,7 @@ async def test_animations(page):
                         'infiniteAnimations': 0,
                         'longDurationAnimations': 0,
                         'hasReducedMotionSupport': False
-                    }
+                     }
                 },
                 'details': {
                     'animations': [],

@@ -1,6 +1,18 @@
 from datetime import datetime
-from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Heading Structure Analysis",
@@ -153,14 +165,14 @@ async def test_headings(page):
                             alignment: textAlign,
                             alignedWithContent: isLeftAligned,
                             isAcceptable: textAlign === 'left' || textAlign === 'center'
-                        };
+                         };
                     }
 
                     return {
                         alignment: textAlign,
                         alignedWithContent: null,
                         isAcceptable: textAlign === 'left' || textAlign === 'center'
-                    };
+                     };
                 }
 
                 function getFontSize(element) {
@@ -349,7 +361,7 @@ async def test_headings(page):
                             hierarchyGaps: results.summary.hierarchyGaps,
                             headingsBeforeMain: results.summary.headingsBeforeMain,
                             visualHierarchyIssues: results.summary.visualHierarchyIssues
-                        }
+                         }
                     },
                     results: results
                 };
@@ -368,7 +380,7 @@ async def test_headings(page):
                 'details': headings_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -387,7 +399,7 @@ async def test_headings(page):
                         'hierarchyGaps': [],
                         'headingsBeforeMain': 0,
                         'visualHierarchyIssues': []
-                    }
+                     }
                 },
                 'details': {
                     'headings': [],

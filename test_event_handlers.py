@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 # Test documentation with information about the event handler tests
 TEST_DOCUMENTATION = {
     "testName": "Event Handler Accessibility Tests",
@@ -98,6 +99,18 @@ TEST_DOCUMENTATION = {
     ]
 }
 
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 async def test_event_handlers(page):
     """
     Test event handlers and tab order accessibility requirements
@@ -287,7 +300,7 @@ async def test_event_handlers(page):
                             hasHighTabindex: highTabIndexElements.length > 0,
                             hasVisualOrderViolations: violationsByType['visual-order'] > 0,
                             hasColumnOrderViolations: violationsByType['column-order'] > 0
-                        }
+                         }
                     }
                 }
 
@@ -476,7 +489,7 @@ async def test_event_handlers(page):
                             modalEscapeSupport: {
                                 hasModals: modals.length > 0,
                                 hasEscapeHandler: hasModalEscapeHandler
-                            },
+                             },
                             mouseOnlyElements: {
                                 count: mouseOnlyElements.length
                             },
@@ -552,7 +565,7 @@ async def test_event_handlers(page):
                                 columnOrderViolations: tabOrderResults.summary.violationsByType['column-order'] || 0,
                                 negativeTabindex: tabOrderResults.summary.violationsByType['negative-tabindex'] || 0,
                                 highTabindex: tabOrderResults.summary.violationsByType['high-tabindex'] || 0
-                            },
+                             },
                             violationCounts: allViolationCounts,
                             violationFlags: violationFlags,
                             totalViolations: eventResults.summary.totalViolations + 
@@ -567,13 +580,21 @@ async def test_event_handlers(page):
             }
         ''')
 
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
+
         return {
             'events': {
                 'pageFlags': event_data['pageFlags'],
                 'details': event_data['results'],
                 'documentation': TEST_DOCUMENTATION,
                 'timestamp': datetime.now().isoformat()
-            }
+             }
         }
 
     except Exception as e:
@@ -602,7 +623,7 @@ async def test_event_handlers(page):
                             'touch': 0,
                             'lifecycle': 0,
                             'other': 0
-                        },
+                         },
                         'nonInteractiveWithHandlers': 0,
                         'missingTabindex': 0,
                         'modalEscapeSupport': {
@@ -665,6 +686,5 @@ async def test_event_handlers(page):
                         'details': str(e)
                     }]
                 },
-                'documentation': TEST_DOCUMENTATION
-            }
+                'documentation': TEST_DOCUMENTATION }
         }

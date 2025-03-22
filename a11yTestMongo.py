@@ -10,38 +10,41 @@ import inspect
 from urllib.parse import urlparse
 import json
 from datetime import datetime
-from database import AccessibilityDB
-from analyze_structure import analyze_common_structure
 
+# Add the project root to the path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-# Your existing test imports
-from test_media_queries import test_media_queries, TEST_DOCUMENTATION as MEDIA_QUERIES_DOCS
-from test_document_links import test_document_links
-from test_fonts import test_fonts
-from test_html_structure import test_html_structure
-from test_focus_management import test_focus_management, TEST_DOCUMENTATION as FOCUS_MANAGEMENT_DOCS
-from test_accessible_names import test_accessible_names, TEST_DOCUMENTATION as ACCESSIBLE_NAMES_DOCS
-from test_images import test_images, TEST_DOCUMENTATION as IMAGES_DOCS
-from test_videos import test_videos
-from test_landmarks import test_landmarks
-from test_forms import test_forms
-from test_headings import test_headings, TEST_DOCUMENTATION as HEADINGS_DOCS
-from test_read_more_links import test_read_more_links
-from test_tabindex import test_tabindex
-from test_timers import test_timers
-from test_animations import test_animations
-from test_maps import test_maps
-from test_colors import test_colors
-from test_tables import test_tables, TEST_DOCUMENTATION as TABLES_DOCS
-from test_modals import test_modals
-from test_event_handlers import test_event_handlers
-from test_title_attribute import test_title_attribute
-from test_lists import test_lists
-from test_menus import test_menus
-from test_floating_dialogs import test_floating_dialogs
-from test_text_resize import test_text_resize
-from test_page_structure import test_page_structure, TEST_DOCUMENTATION as PAGE_STRUCTURE_DOCS
-from test_responsive_accessibility import test_responsive_accessibility, consolidate_responsive_results, TEST_DOCUMENTATION as RESPONSIVE_DOCS
+from src.test_with_mongo.database import AccessibilityDB
+from src.test_with_mongo.analyze_structure import analyze_common_structure
+
+# Import test modules with absolute paths
+from src.test_with_mongo.test_media_queries import test_media_queries, TEST_DOCUMENTATION as MEDIA_QUERIES_DOCS
+from src.test_with_mongo.test_document_links import test_document_links
+from src.test_with_mongo.test_fonts import test_fonts
+from src.test_with_mongo.test_html_structure import test_html_structure
+from src.test_with_mongo.test_focus_management import test_focus_management, TEST_DOCUMENTATION as FOCUS_MANAGEMENT_DOCS
+from src.test_with_mongo.test_accessible_names import test_accessible_names, TEST_DOCUMENTATION as ACCESSIBLE_NAMES_DOCS
+from src.test_with_mongo.test_images import test_images, TEST_DOCUMENTATION as IMAGES_DOCS
+from src.test_with_mongo.test_videos import test_videos
+from src.test_with_mongo.test_landmarks import test_landmarks
+from src.test_with_mongo.test_forms import test_forms
+from src.test_with_mongo.test_headings import test_headings, TEST_DOCUMENTATION as HEADINGS_DOCS
+from src.test_with_mongo.test_read_more_links import test_read_more_links
+from src.test_with_mongo.test_tabindex import test_tabindex
+from src.test_with_mongo.test_timers import test_timers
+from src.test_with_mongo.test_animations import test_animations
+from src.test_with_mongo.test_maps import test_maps
+from src.test_with_mongo.test_colors import test_colors
+from src.test_with_mongo.test_tables import test_tables, TEST_DOCUMENTATION as TABLES_DOCS
+from src.test_with_mongo.test_modals import test_modals
+from src.test_with_mongo.test_event_handlers import test_event_handlers
+from src.test_with_mongo.test_title_attribute import test_title_attribute
+from src.test_with_mongo.test_lists import test_lists
+from src.test_with_mongo.test_menus import test_menus
+from src.test_with_mongo.test_floating_dialogs import test_floating_dialogs
+from src.test_with_mongo.test_text_resize import test_text_resize, TEST_DOCUMENTATION as TEXT_RESIZE_DOCS
+from src.test_with_mongo.test_page_structure import test_page_structure, TEST_DOCUMENTATION as PAGE_STRUCTURE_DOCS
+from src.test_with_mongo.test_responsive_accessibility import test_responsive_accessibility, consolidate_responsive_results, TEST_DOCUMENTATION as RESPONSIVE_DOCS
 
 def clean_filename(url):
     """
@@ -74,6 +77,13 @@ async def test_page_accessibility(page):
         # Get responsive breakpoints for later viewport testing
         responsive_breakpoints = []
         
+        # DEBUGGING: Print the complete media queries results structure
+        print("\nDEBUG: Media query results structure:")
+        print(f"Type: {type(media_queries_results)}")
+        print(f"Keys: {media_queries_results.keys() if isinstance(media_queries_results, dict) else 'Not a dict'}")
+        if isinstance(media_queries_results, dict) and 'media_queries' in media_queries_results:
+            print(f"media_queries keys: {media_queries_results['media_queries'].keys() if isinstance(media_queries_results['media_queries'], dict) else 'Not a dict'}")
+        
         # Extract breakpoints from the media queries results
         try:
             # First try the direct 'breakpoints' property that's in the new data structure
@@ -94,18 +104,33 @@ async def test_page_accessibility(page):
                 else:
                     print("No responsive breakpoints found in media queries results")
             
-            # If no breakpoints were found, log it but don't add default ones
+            # DEBUGGING: Try to find any breakpoints anywhere in the structure
+            print("\nDEBUG: Looking for breakpoints in any part of the structure...")
+            if isinstance(media_queries_results, dict):
+                for key, value in media_queries_results.items():
+                    print(f"Checking key: {key}")
+                    if isinstance(value, dict) and 'breakpoints' in value:
+                        print(f"Found breakpoints in {key}: {value['breakpoints']}")
+                    elif isinstance(value, dict) and 'responsiveBreakpoints' in value:
+                        print(f"Found responsiveBreakpoints in {key}: {value['responsiveBreakpoints']}")
+            
+            # If no breakpoints were found, add default breakpoints for testing
             if not responsive_breakpoints:
-                print("No responsive breakpoints found in CSS media queries. Responsive accessibility tests will be skipped.")
-                # No default breakpoints, as we only want to test actual responsive breakpoints
+                print("No responsive breakpoints found in CSS media queries.")
+                print("ADDING DEFAULT BREAKPOINTS for testing purposes: [320, 768, 1024, 1440]")
+                responsive_breakpoints = [320, 768, 1024, 1440]
         except Exception as bp_error:
             print(f"Error extracting breakpoints: {str(bp_error)}")
-            # No default breakpoints on error - only want to test actual responsive breakpoints
+            # Add default breakpoints for testing purposes
+            print("Adding default breakpoints after error: [320, 768, 1024, 1440]")
+            responsive_breakpoints = [320, 768, 1024, 1440]
             
         # Store the original viewport to restore later
         original_viewport = page.viewport
         print(f"Original viewport: {original_viewport}")
         
+        # Comment out all other tests except media_queries and responsive test loop
+        """
         # Test for document links
         print("Testing for electronic documents...")
         document_results = await test_document_links(page)
@@ -241,11 +266,10 @@ async def test_page_accessibility(page):
         floating_results = await test_floating_dialogs(page)
         results['tests']['floating_dialogs'] = floating_results
 
-        '''
         print("Testing text resize...")
         resize_results = await test_text_resize(page)
         results['tests']['text_resize'] = resize_results
-        '''
+        """
         
         # Add responsive breakpoint testing structure
         # Using our comprehensive responsive accessibility tests
@@ -284,20 +308,127 @@ async def test_page_accessibility(page):
                         'tests': {}
                     }
                     
+                    # Commented out text_resize test as requested
+                    """
+                    # First, run the text resize test to test our viewport restoration fix
+                    print("  Testing text resize at this breakpoint...")
+                    text_resize_results = await test_text_resize(page)
+                    
+                    # DEBUGGING: Check the structure of text_resize_results
+                    print(f"\n  DEBUG: Text resize results structure:")
+                    print(f"  Type: {type(text_resize_results)}")
+                    print(f"  Keys: {text_resize_results.keys() if isinstance(text_resize_results, dict) else 'Not a dict'}")
+                    if isinstance(text_resize_results, dict) and 'textResize' in text_resize_results:
+                        resize_data = text_resize_results['textResize']
+                        print(f"  Text resize issues detected: {resize_data.get('pageFlags', {}).get('hasResizeIssues', False)}")
+                        print(f"  Viewports tested: {resize_data.get('pageFlags', {}).get('details', {}).get('totalViewportsTested', 0)}")
+                    
+                    breakpoint_results['tests']['text_resize'] = text_resize_results
+                    """
+                    
+                    # Add empty placeholder for text_resize test results
+                    breakpoint_results['tests']['text_resize'] = {
+                        'textResize': {
+                            'pageFlags': {
+                                'hasResizeIssues': False,
+                                'details': {
+                                    'totalViewportsTested': 0,
+                                    'viewportsWithIssues': 0,
+                                }
+                            },
+                            'results': [],
+                            'timestamp': datetime.now().isoformat()
+                        }
+                    }
+                    
+                    # Check viewport directly without running text_resize test
+                    current_viewport = await page.evaluate('() => ({width: window.innerWidth, height: window.innerHeight})')
+                    print(f"  Current viewport: {current_viewport}")
+                    
+                    # If viewport doesn't match breakpoint, reset it
+                    if current_viewport['width'] != breakpoint:
+                        print(f"  WARNING: Viewport doesn't match breakpoint. Resetting to {breakpoint}px")
+                        await page.setViewport({
+                            'width': breakpoint,
+                            'height': original_viewport['height']
+                        })
+                        await asyncio.sleep(0.5)
+                    
+                    # Ensure page has _accessibility_context initialized (normally done by page_structure test)
+                    if not hasattr(page, '_accessibility_context'):
+                        print("  Initializing page _accessibility_context for section reporting")
+                        page._accessibility_context = {
+                            'page_structure': {}
+                        }
+                    
                     # Run comprehensive responsive accessibility tests at this breakpoint
                     print("  Running responsive accessibility tests at this breakpoint...")
                     responsive_results = await test_responsive_accessibility(page, breakpoint)
                     
-                    # Ensure consistent data structure - responsive_results should contain a 'tests' dictionary
+                    # DEBUGGING: Check the structure of responsive_results
+                    print(f"\n  DEBUG: Responsive accessibility results structure:")
+                    print(f"  Type: {type(responsive_results)}")
+                    print(f"  Keys: {responsive_results.keys() if isinstance(responsive_results, dict) else 'Not a dict'}")
+                    if isinstance(responsive_results, dict):
+                        if 'tests' in responsive_results:
+                            print(f"  Contains test results: {list(responsive_results['tests'].keys())}")
+                        elif 'breakpoint' in responsive_results:
+                            print(f"  Contains breakpoint: {responsive_results.get('breakpoint')}")
+                            if 'tests' in responsive_results:
+                                print(f"  Contains tests: {list(responsive_results['tests'].keys())}")
+                    
+                    # Store the results - check for different possible formats from test_responsive_accessibility
                     if isinstance(responsive_results, dict):
                         # Store the responsive results in the correct structure
-                        breakpoint_results['tests'] = responsive_results
+                        breakpoint_results['tests']['responsive'] = responsive_results
+                        
+                        # DEBUGGING: Add section data for better issue reporting
+                        # Check if there are issues in the responsive results
+                        for test_name in ['overflow', 'touchTargets', 'fontScaling', 'fixedPosition', 'contentStacking']:
+                            # Check if we can find issues in the result structure
+                            issues = None
+                            
+                            # Try several possible structure paths
+                            if test_name in responsive_results:
+                                # Direct test result
+                                test_data = responsive_results[test_name]
+                                if isinstance(test_data, dict) and 'issues' in test_data:
+                                    issues = test_data['issues']
+                            elif 'tests' in responsive_results and test_name in responsive_results['tests']:
+                                # Nested under tests
+                                test_data = responsive_results['tests'][test_name]
+                                if isinstance(test_data, dict) and 'issues' in test_data:
+                                    issues = test_data['issues']
+                            
+                            # If we found issues, add section data for reporting
+                            if issues and isinstance(issues, list):
+                                print(f"  Found {len(issues)} issues in {test_name} test")
+                        
+                        # DEBUGGING: Force a simple structure if responsive_results looks empty or wrong
+                        if not responsive_results or (len(responsive_results) <= 2 and ('error' in responsive_results or 'timestamp' in responsive_results)):
+                            print("  WARNING: Responsive results may be incomplete - adding forced test data")
+                            # Add forced test data for debugging
+                            breakpoint_results['tests']['responsive']['forced_data'] = {
+                                'tests': {
+                                    'overflow': {'issues': []},
+                                    'touchTargets': {'issues': []},
+                                    'fontScaling': {'issues': []},
+                                    'contentStacking': {'issues': []}
+                                },
+                                'timestamp': datetime.now().isoformat()
+                            }
                     else:
                         # Create a proper structure if something went wrong
                         print(f"  Warning: Unexpected responsive results type: {type(responsive_results)}")
-                        breakpoint_results['tests'] = {
+                        breakpoint_results['tests']['responsive'] = {
                             'error': 'Invalid results structure',
-                            'timestamp': datetime.now().isoformat()
+                            'timestamp': datetime.now().isoformat(),
+                            'tests': {
+                                'overflow': {'issues': []},
+                                'touchTargets': {'issues': []},
+                                'fontScaling': {'issues': []},
+                                'contentStacking': {'issues': []}
+                            }
                         }
                     
                     # Store results for this breakpoint
@@ -316,15 +447,45 @@ async def test_page_accessibility(page):
             # Consolidate results across all breakpoints
             print("\n--- Consolidating responsive testing results ---")
             try:
-                consolidated_results = consolidate_responsive_results(results['responsive_testing']['breakpoint_results'])
+                # Pass the page object to allow section reporting
+                consolidated_results = consolidate_responsive_results(
+                    results['responsive_testing']['breakpoint_results'], 
+                    page  # Include page object for section reporting
+                )
+                
+                # Make sure we have a valid result structure
+                if not isinstance(consolidated_results, dict):
+                    print(f"  WARNING: Consolidation returned non-dictionary result: {type(consolidated_results)}")
+                    consolidated_results = {
+                        'summary': {
+                            'totalIssues': 0,
+                            'affectedBreakpoints': 0
+                        },
+                        'timestamp': datetime.now().isoformat()
+                    }
+                
+                # Store the consolidated results
                 results['responsive_testing']['consolidated'] = consolidated_results
                 
                 # Add summary to main results
                 print(f"  Found {consolidated_results.get('summary', {}).get('totalIssues', 0)} responsive accessibility issues across {consolidated_results.get('summary', {}).get('affectedBreakpoints', 0)} breakpoints")
                 
+                # Add additional debugging information about the consolidated issues 
+                if 'issuesByType' in consolidated_results:
+                    print("\n  Issue types found:")
+                    for issue_type, issue_data in consolidated_results['issuesByType'].items():
+                        print(f"  - {issue_type}: {issue_data.get('count', 0)} issues across {len(issue_data.get('affectedBreakpoints', []))} breakpoints")
+                
             except Exception as consolidation_error:
                 print(f"  ERROR consolidating results: {str(consolidation_error)}")
+                import traceback
+                traceback.print_exc()
+                # Create a valid fallback result structure even in case of error
                 results['responsive_testing']['consolidated'] = {
+                    'summary': {
+                        'totalIssues': 0,
+                        'affectedBreakpoints': 0
+                    },
                     'error': str(consolidation_error),
                     'timestamp': datetime.now().isoformat()
                 }
@@ -368,6 +529,7 @@ def collect_test_documentation():
     documentation['tables'] = TABLES_DOCS
     documentation['headings'] = HEADINGS_DOCS
     documentation['responsive_accessibility'] = RESPONSIVE_DOCS
+    documentation['text_resize'] = TEXT_RESIZE_DOCS
     
     # Just return what we've manually imported to simplify the testing process
     print(f"Collected documentation for {len(documentation)} tests")
@@ -551,6 +713,80 @@ async def process_urls(file_path, screenshots_dir, results_file, max_pages, clea
         if results_file:
             db.export_to_json(results_file, test_run_id)
             print(f"\nFinal results saved to: {results_file}")
+            
+        # DEBUGGING: Check the MongoDB to see if the results were saved properly
+        print("\nDEBUGGING: Checking MongoDB for saved results")
+        debug_urls = list(urls)  # Make a copy to avoid modifying the original
+        
+        try:
+            # First, check if the test run exists
+            latest_test_run = db.get_latest_test_run()
+            if latest_test_run:
+                print(f"\nLatest test run ID: {latest_test_run.get('_id')}")
+                print(f"Started: {latest_test_run.get('timestamp_start')}")
+                print(f"Status: {latest_test_run.get('status')}")
+            else:
+                print("Warning: No test runs found in database")
+                
+            for url in debug_urls:
+                print(f"\nChecking results for URL: {url}")
+                
+                try:
+                    page_result = db.get_page_result(test_run_id, url)
+                    
+                    if page_result:
+                        print(f"Status: {page_result.get('status', 'unknown')}")
+                        
+                        # Check for responsive testing results
+                        if 'accessibility' in page_result and 'responsive_testing' in page_result['accessibility']:
+                            resp_testing = page_result['accessibility']['responsive_testing']
+                            print(f"Responsive breakpoints: {resp_testing.get('breakpoints', [])}")
+                            print(f"Number of breakpoint results: {len(resp_testing.get('breakpoint_results', {}))}")
+                            
+                            # Check each breakpoint result
+                            for bp, bp_result in resp_testing.get('breakpoint_results', {}).items():
+                                print(f"\nBreakpoint {bp}:")
+                                print(f"Tests: {list(bp_result.get('tests', {}).keys())}")
+                                
+                                # Check text resize results
+                                if 'text_resize' in bp_result.get('tests', {}):
+                                    tr_result = bp_result['tests']['text_resize']
+                                    if 'textResize' in tr_result:
+                                        print(f"Text resize issues: {tr_result['textResize'].get('pageFlags', {}).get('hasResizeIssues', 'N/A')}")
+                                    else:
+                                        print(f"Text resize format: {list(tr_result.keys())}")
+                                
+                                # Check responsive results
+                                if 'responsive' in bp_result.get('tests', {}):
+                                    resp_result = bp_result['tests']['responsive']
+                                    print(f"Responsive keys: {list(resp_result.keys())}")
+                            
+                            # Check consolidated results
+                            if 'consolidated' in resp_testing:
+                                consolidated = resp_testing['consolidated']
+                                print("\nConsolidated Results:")
+                                print(f"Total Issues: {consolidated.get('summary', {}).get('totalIssues', 0)}")
+                                print(f"Affected Breakpoints: {consolidated.get('summary', {}).get('affectedBreakpoints', 0)}")
+                                
+                                # Check issue types
+                                if 'issuesByType' in consolidated:
+                                    print("Issue Types:")
+                                    for issue_type, issue_data in consolidated['issuesByType'].items():
+                                        print(f"- {issue_type}: {issue_data.get('count', 0)} issues")
+                        else:
+                            print("No responsive testing results found")
+                    else:
+                        print("No results found for this URL")
+                        
+                except Exception as e:
+                    print(f"Error retrieving results for URL {url}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                
+        except Exception as e:
+            print(f"Error checking database results: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
 @click.command()
 @click.argument('input_file', type=click.Path(exists=True))

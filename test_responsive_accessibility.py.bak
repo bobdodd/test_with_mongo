@@ -155,14 +155,6 @@ async def test_responsive_accessibility(page, breakpoint):
 async def test_content_overflow(page, breakpoint):
     """Test for elements that overflow the viewport or their container"""
     try:
-        # Initialize test data structure for section-aware reporting
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         overflow_data = await page.evaluate('''
             (breakpoint) => {
                 // Find elements that overflow the viewport horizontally
@@ -345,13 +337,28 @@ async def test_content_overflow(page, breakpoint):
 
         
         # Add section information to results
+
+        
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+        
+        
+
         
         # Print violations with section information for debugging
+
+        
         if 'violations' in test_data['results']:
+
+        
             print_violations_with_sections(test_data['results']['violations'])
+
+        
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+        
             print_violations_with_sections(test_data['results']['details']['violations'])
+
         
         return {
             'pageFlags': pageFlags,
@@ -363,21 +370,20 @@ async def test_content_overflow(page, breakpoint):
     except Exception as e:
         print(f"Error testing content overflow: {str(e)}")
 
-        # Initialize test data structure for section-aware reporting if it doesn't exist
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         # Add section information to results
+
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
         
+
         # Print violations with section information for debugging
+
         if 'violations' in test_data['results']:
+
             print_violations_with_sections(test_data['results']['violations'])
+
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
             print_violations_with_sections(test_data['results']['details']['violations'])
 
         return {
@@ -388,14 +394,6 @@ async def test_content_overflow(page, breakpoint):
 async def test_touch_targets(page, breakpoint):
     """Test for touch targets that are too small at the current breakpoint"""
     try:
-        # Initialize test data structure for section-aware reporting
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         # This test is most relevant at mobile breakpoints
         is_mobile_breakpoint = breakpoint <= 768
         
@@ -584,15 +582,31 @@ async def test_touch_targets(page, breakpoint):
                 'details': f"Touch targets are too close together ({adjacent.get('distance', 0):.1f}px apart). Should be at least 44px apart.",
                 'distance': adjacent.get('distance')
             })
+
             
         # Add section information to results
+
+            
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+            
         
+
+            
         # Print violations with section information for debugging
+
+            
         if 'violations' in test_data['results']:
+
+            
             print_violations_with_sections(test_data['results']['violations'])
+
+            
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+            
             print_violations_with_sections(test_data['results']['details']['violations'])
+
             
         return {
             'pageFlags': pageFlags,
@@ -604,21 +618,20 @@ async def test_touch_targets(page, breakpoint):
     except Exception as e:
         print(f"Error testing touch targets: {str(e)}")
 
-        # Initialize test data structure for section-aware reporting if it doesn't exist
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         # Add section information to results
+
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
         
+
         # Print violations with section information for debugging
+
         if 'violations' in test_data['results']:
+
             print_violations_with_sections(test_data['results']['violations'])
+
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
             print_violations_with_sections(test_data['results']['details']['violations'])
 
         return {
@@ -629,14 +642,6 @@ async def test_touch_targets(page, breakpoint):
 async def test_font_scaling(page, breakpoint):
     """Test for text that is too small at the current breakpoint"""
     try:
-        # Initialize test data structure for section-aware reporting
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         font_data = await page.evaluate('''
             (breakpoint) => {
                 // Analyze text elements for size issues
@@ -799,15 +804,31 @@ async def test_font_scaling(page, breakpoint):
                 'fontSize': element.get('fontSize'),
                 'isInteractive': element.get('isInteractive')
             })
+
             
         # Add section information to results
+
+            
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+            
         
+
+            
         # Print violations with section information for debugging
+
+            
         if 'violations' in test_data['results']:
+
+            
             print_violations_with_sections(test_data['results']['violations'])
+
+            
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+            
             print_violations_with_sections(test_data['results']['details']['violations'])
+
             
         return {
             'pageFlags': pageFlags,
@@ -819,21 +840,20 @@ async def test_font_scaling(page, breakpoint):
     except Exception as e:
         print(f"Error testing font scaling: {str(e)}")
 
-        # Initialize test data structure for section-aware reporting if it doesn't exist
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         # Add section information to results
+
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
         
+
         # Print violations with section information for debugging
+
         if 'violations' in test_data['results']:
+
             print_violations_with_sections(test_data['results']['violations'])
+
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
             print_violations_with_sections(test_data['results']['details']['violations'])
 
         return {
@@ -844,14 +864,6 @@ async def test_font_scaling(page, breakpoint):
 async def test_fixed_position(page, breakpoint):
     """Test for fixed position elements that might cause issues"""
     try:
-        # Initialize test data structure for section-aware reporting
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         fixed_position_data = await page.evaluate('''
             (breakpoint) => {
                 // Find fixed or sticky positioned elements
@@ -1078,15 +1090,31 @@ async def test_fixed_position(page, breakpoint):
                     'details': issue.get('details'),
                     'position': element.get('position')
                 })
+
                 
         # Add section information to results
+
+                
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+                
         
+
+                
         # Print violations with section information for debugging
+
+                
         if 'violations' in test_data['results']:
+
+                
             print_violations_with_sections(test_data['results']['violations'])
+
+                
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+                
             print_violations_with_sections(test_data['results']['details']['violations'])
+
                 
         return {
             'pageFlags': pageFlags,
@@ -1098,21 +1126,20 @@ async def test_fixed_position(page, breakpoint):
     except Exception as e:
         print(f"Error testing fixed position elements: {str(e)}")
 
-        # Initialize test data structure for section-aware reporting if it doesn't exist
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         # Add section information to results
+
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
         
+
         # Print violations with section information for debugging
+
         if 'violations' in test_data['results']:
+
             print_violations_with_sections(test_data['results']['violations'])
+
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
             print_violations_with_sections(test_data['results']['details']['violations'])
 
         return {
@@ -1123,14 +1150,6 @@ async def test_fixed_position(page, breakpoint):
 async def test_content_stacking(page, breakpoint):
     """Test for content stacking order issues at this breakpoint"""
     try:
-        # Initialize test data structure for section-aware reporting
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         stacking_data = await page.evaluate('''
             (breakpoint) => {
                 // Analyze how content stacks at this breakpoint
@@ -1168,6 +1187,23 @@ async def test_content_stacking(page, breakpoint):
                     
                     // Record DOM order
                     results.domOrder = visibleSections.map(section => {
+
+                        # Add section information to results
+
+                        test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+                        
+
+                        # Print violations with section information for debugging
+
+                        if 'violations' in test_data['results']:
+
+                            print_violations_with_sections(test_data['results']['violations'])
+
+                        elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+                            print_violations_with_sections(test_data['results']['details']['violations'])
+
                         return {
                             element: section.tagName.toLowerCase(),
                             role: section.getAttribute('role') || null,
@@ -1186,6 +1222,23 @@ async def test_content_stacking(page, breakpoint):
                     // Record visual order
                     results.visualOrder = visualOrder.map(section => {
                         const rect = section.getBoundingClientRect();
+
+                        # Add section information to results
+
+                        test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+                        
+
+                        # Print violations with section information for debugging
+
+                        if 'violations' in test_data['results']:
+
+                            print_violations_with_sections(test_data['results']['violations'])
+
+                        elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+                            print_violations_with_sections(test_data['results']['details']['violations'])
+
                         return {
                             element: section.tagName.toLowerCase(),
                             role: section.getAttribute('role') || null,
@@ -1314,15 +1367,31 @@ async def test_content_stacking(page, breakpoint):
                     'domPosition': violation.get('domPosition'),
                     'difference': position_difference
                 })
+
                 
         # Add section information to results
+
+                
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+                
         
+
+                
         # Print violations with section information for debugging
+
+                
         if 'violations' in test_data['results']:
+
+                
             print_violations_with_sections(test_data['results']['violations'])
+
+                
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+                
             print_violations_with_sections(test_data['results']['details']['violations'])
+
                 
         return {
             'pageFlags': pageFlags,
@@ -1334,21 +1403,20 @@ async def test_content_stacking(page, breakpoint):
     except Exception as e:
         print(f"Error testing content stacking: {str(e)}")
 
-        # Initialize test data structure for section-aware reporting if it doesn't exist
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
-        
         # Add section information to results
+
         test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
         
+
         # Print violations with section information for debugging
+
         if 'violations' in test_data['results']:
+
             print_violations_with_sections(test_data['results']['violations'])
+
         elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
             print_violations_with_sections(test_data['results']['details']['violations'])
 
         return {
@@ -1356,40 +1424,36 @@ async def test_content_stacking(page, breakpoint):
             'timestamp': datetime.now().isoformat()
         }
 
-def consolidate_responsive_results(breakpoint_results, page=None):
+def consolidate_responsive_results(breakpoint_results):
     """
     Consolidate results from multiple breakpoints into a summary
     
     Args:
         breakpoint_results: Dictionary of results from each breakpoint
-        page: Optional Puppeteer page object for section-aware reporting
         
     Returns:
         dict: Consolidated summary of issues across breakpoints
     """
     try:
         print("Consolidating responsive test results...")
-        print(f"DEBUG: breakpoint_results keys: {list(breakpoint_results.keys())}")
-        
-        # Initialize test data structure for section-aware reporting
-        test_data = {
-            'results': {
-                'violations': [],
-                'summary': {}
-            }
-        }
         
         if not breakpoint_results:
-            print("ERROR: No breakpoint results to consolidate")
-            # Add section information to results if page is provided
-            if page:
-                test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
-                
-                # Print violations with section information for debugging
-                if 'violations' in test_data['results']:
-                    print_violations_with_sections(test_data['results']['violations'])
-                elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
-                    print_violations_with_sections(test_data['results']['details']['violations'])
+
+            # Add section information to results
+
+            test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+            
+
+            # Print violations with section information for debugging
+
+            if 'violations' in test_data['results']:
+
+                print_violations_with_sections(test_data['results']['violations'])
+
+            elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+                print_violations_with_sections(test_data['results']['details']['violations'])
 
             return {
                 'error': 'No breakpoint results to consolidate',
@@ -1433,66 +1497,20 @@ def consolidate_responsive_results(breakpoint_results, page=None):
         
         # Process each breakpoint
         for breakpoint, results in breakpoint_results.items():
-            print(f"DEBUG: Processing breakpoint {breakpoint}")
-            
-            # Get nested test data structure
-            # In a11yTestMongo.py, we store the responsive results as:
-            # breakpoint_results[bp]['tests']['responsive']
-            responsive_data = None
-            
-            # First, check if this is already the tests structure or if we need to go deeper
-            if 'tests' in results:
-                print(f"DEBUG: Found 'tests' key in breakpoint results with keys: {list(results['tests'].keys())}")
-                if 'responsive' in results['tests']:
-                    responsive_data = results['tests']['responsive']
-                    print(f"DEBUG: Found 'responsive' key with keys: {list(responsive_data.keys()) if isinstance(responsive_data, dict) else 'Not a dict'}")
-                else:
-                    # Direct test structure - the structure used in test_responsive_accessibility
-                    responsive_data = results['tests']
-            else:
-                # It might be the direct data structure from test_responsive_accessibility function
-                # where each test result is stored directly
-                print(f"DEBUG: No 'tests' key found, using direct breakpoint results with keys: {list(results.keys())}")
-                responsive_data = results
-            
-            # Skip this breakpoint if no responsive data was found
-            if not responsive_data:
-                print(f"DEBUG: No responsive data found for breakpoint {breakpoint}")
+            if 'tests' not in results:
                 continue
                 
-            # Handle different data structures - extract the actual test results
-            tests = {}
+            # Get tests for this breakpoint - handle nested structure
+            bp_tests = results['tests']
             
-            # Check if we have a tests dict inside responsive_data
-            if isinstance(responsive_data, dict) and 'tests' in responsive_data:
-                tests = responsive_data['tests']
-                print(f"DEBUG: Found 'tests' inside responsive_data with keys: {list(tests.keys()) if isinstance(tests, dict) else 'Not a dict'}")
-            elif isinstance(responsive_data, dict):
-                # Maybe the test results are directly in responsive_data
-                for test_name in ['overflow', 'touchTargets', 'fontScaling', 'fixedPosition', 'contentStacking']:
-                    if test_name in responsive_data:
-                        tests[test_name] = responsive_data[test_name]
-                        print(f"DEBUG: Found test '{test_name}' directly in responsive_data")
+            # The structure might be bp_tests.tests.test_name due to how we store results
+            tests = bp_tests.get('tests', bp_tests)  # Try to get nested tests, or use the direct object
             
-            # Add fallback structure detection - check if this is a direct result from test_responsive_accessibility
-            if not tests and isinstance(responsive_data, dict) and 'pageFlags' in responsive_data:
-                print(f"DEBUG: This appears to be a direct test result with 'pageFlags'")
-                # This is a direct test result, extract its test name from the data
-                test_name = None
-                for possible_name in ['overflow', 'touchTargets', 'fontScaling', 'fixedPosition', 'contentStacking']:
-                    if possible_name.lower() in str(responsive_data).lower():
-                        test_name = possible_name
-                        break
-                
-                if test_name:
-                    tests[test_name] = responsive_data
-                    print(f"DEBUG: Created test entry for '{test_name}' from direct result")
+            # Ensure we have a dictionary for tests
+            if not isinstance(tests, dict):
+                print(f"Warning: tests data is not a dictionary: {type(tests)}")
+                tests = {}  # Create empty dict to avoid errors
             
-            # If we found nothing, log and continue to next breakpoint
-            if not tests:
-                print(f"WARNING: Could not extract any tests from breakpoint {breakpoint} data")
-                continue
-                
             # Process each test type
             for test_name in ['overflow', 'touchTargets', 'fontScaling', 'fixedPosition', 'contentStacking']:
                 if test_name not in tests:
@@ -1505,35 +1523,11 @@ def consolidate_responsive_results(breakpoint_results, page=None):
                     print(f"Warning: {test_name} test data is not a dictionary (value: {test_data})")
                     continue  # Skip this test
                 
-                # We need to handle different data structures:
-                # 1. Direct issues array in test_data
-                # 2. Issues nested inside pageFlags
-                issues = []
-                
-                if 'issues' in test_data and test_data['issues']:
-                    issues = test_data['issues']
-                    print(f"DEBUG: Found {len(issues)} issues directly in {test_name}")
-                elif 'pageFlags' in test_data:
-                    # Extract issues from pageFlags data
-                    for flag_key, flag_value in test_data['pageFlags'].items():
-                        if isinstance(flag_value, bool) and flag_value and 'has' in flag_key.lower():
-                            issue_type = flag_key.replace('has', '').lower()
-                            # Create synthetic issue
-                            issues.append({
-                                'element': 'page',
-                                'id': None,
-                                'issueType': issue_type,
-                                'details': f"Page has {issue_type} issues at {breakpoint}px breakpoint"
-                            })
-                            print(f"DEBUG: Created synthetic issue for '{issue_type}' from pageFlags")
-                
-                # If we found no issues from any source, skip this test
-                if not issues:
-                    print(f"DEBUG: No issues found for {test_name} at breakpoint {breakpoint}")
+                if 'issues' not in test_data or not test_data['issues']:
                     continue
-                
+                    
                 # Update test summary
-                consolidated['testsSummary'][test_name]['issueCount'] += len(issues)
+                consolidated['testsSummary'][test_name]['issueCount'] += len(test_data['issues'])
                 if breakpoint not in consolidated['testsSummary'][test_name]['affectedBreakpoints']:
                     consolidated['testsSummary'][test_name]['affectedBreakpoints'].append(breakpoint)
                 
@@ -1542,7 +1536,7 @@ def consolidate_responsive_results(breakpoint_results, page=None):
                     consolidated['testsSummary'][test_name]['elementsByBreakpoint'][breakpoint] = []
                 
                 # Process each issue for this test
-                for issue in issues:
+                for issue in test_data['issues']:
                     issue_type = issue.get('issueType', 'unknown')
                     element_id = issue.get('id') or issue.get('element') or 'unknown'
                     
@@ -1627,69 +1621,28 @@ def consolidate_responsive_results(breakpoint_results, page=None):
             'contentStackingIssues': consolidated['testsSummary']['contentStacking']['issueCount']
         }
         
-        # Print summary for debugging
-        print(f"Consolidated summary: {consolidated['summary']}")
-        
-        # Add section information to results if page is provided
-        if page and hasattr(page, '_accessibility_context'):
-            try:
-                # Make sure test_data has a 'results' key with expected structure
-                if 'results' not in test_data:
-                    test_data['results'] = {
-                        'violations': [],
-                        'summary': {}
-                    }
-                
-                test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
-                
-                # Print violations with section information for debugging
-                if 'violations' in test_data['results']:
-                    print_violations_with_sections(test_data['results']['violations'])
-                elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
-                    print_violations_with_sections(test_data['results']['details']['violations'])
-            except Exception as e:
-                print(f"Error adding section information: {str(e)}")
-                # Don't let this error prevent returning the consolidated results
-        
         return consolidated
         
     except Exception as e:
         print(f"Error consolidating responsive results: {str(e)}")
-        import traceback
-        traceback.print_exc()
 
-        # Create a minimal valid result structure
-        result = {
-            'summary': {
-                'totalIssues': 0,
-                'affectedElements': 0,
-                'totalBreakpoints': 0,
-                'affectedBreakpoints': 0
-            },
+        # Add section information to results
+
+        test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
+
+        
+
+        # Print violations with section information for debugging
+
+        if 'violations' in test_data['results']:
+
+            print_violations_with_sections(test_data['results']['violations'])
+
+        elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
+
+            print_violations_with_sections(test_data['results']['details']['violations'])
+
+        return {
             'error': str(e),
             'timestamp': datetime.now().isoformat()
         }
-        
-        # Try to add section information if possible
-        if page and hasattr(page, '_accessibility_context'):
-            try:
-                # Initialize test data structure for section-aware reporting
-                test_data = {
-                    'results': {
-                        'violations': [],
-                        'summary': {}
-                    }
-                }
-                
-                test_data['results'] = add_section_info_to_test_results(page, test_data['results'])
-                
-                # Print violations with section information for debugging
-                if 'violations' in test_data['results']:
-                    print_violations_with_sections(test_data['results']['violations'])
-                elif 'details' in test_data['results'] and 'violations' in test_data['results']['details']:
-                    print_violations_with_sections(test_data['results']['details']['violations'])
-            except Exception as section_error:
-                print(f"Error adding section information: {str(section_error)}")
-                # Don't let this error prevent returning a result
-        
-        return result

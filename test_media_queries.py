@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "Media Queries Analysis",
@@ -85,8 +98,32 @@ async def test_media_queries(page):
     """
     try:
         media_queries_data = await page.evaluate('''
-            () => {
-                function extractMediaQueries() {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        function extractMediaQueries() {
                     const mediaQueries = [];
                     const breakpoints = new Set();
                     
@@ -146,7 +183,7 @@ async def test_media_queries(page):
                                                     value: parseInt(value),
                                                     unit: unit,
                                                     pxValue: pxValue
-                                                };
+                                                 };
                                             });
                                         }
                                     }
@@ -200,7 +237,7 @@ async def test_media_queries(page):
                             breakpoint: bp,
                             type: type,
                             unit: 'px'
-                        };
+                         };
                     });
                     
                     return {
@@ -215,12 +252,12 @@ async def test_media_queries(page):
                             reducedMotionQueries: mediaQueries.filter(mq => mq.features.isReducedMotion).length,
                             darkModeQueries: mediaQueries.filter(mq => mq.features.isDarkMode).length,
                             orientationQueries: mediaQueries.filter(mq => mq.features.isOrientation).length
-                        }
+                         }
                     };
                 }
                 
                 return extractMediaQueries();
-            }
+        }
         ''')
         
         # Print a summary of the media queries found
@@ -308,6 +345,21 @@ async def test_media_queries(page):
             'breakpointObjects': media_queries_data.get('breakpointObjects', [])
         }
         
+        # Add media_queries_data to a variable called 'data' so the section reporting template can use it
+        data = {
+            'results': {
+                'mediaQueries': media_queries_data['mediaQueries'],
+                'violations': recommendations,  # Treat recommendations as violations for section reporting
+                'summary': media_queries_data['summary']
+            }
+        }
+        
+        # Add section information to results
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+        
+        # Print violations with section information for debugging
+        print_violations_with_sections(data['results']['violations'])
+        
         return {
             'media_queries': {
                 'pageFlags': page_flags,
@@ -316,7 +368,8 @@ async def test_media_queries(page):
                     'breakpoints': media_queries_data['breakpoints'],
                     'breakpointGroups': media_queries_data['breakpointGroups'],
                     'summary': media_queries_data['summary'],
-                    'recommendations': recommendations
+                    'recommendations': recommendations,
+                    'section_statistics': data['results'].get('section_statistics', {})
                 },
                 'responsiveBreakpoints': responsive_breakpoints,  # Dedicated field for easy database queries
                 'timestamp': datetime.now().isoformat(),
@@ -335,7 +388,7 @@ async def test_media_queries(page):
                     'hasReducedMotionSupport': False,
                     'hasDarkModeSupport': False,
                     'hasOrientationStyles': False
-                },
+                 },
                 'details': {
                     'mediaQueries': [],
                     'breakpoints': [],

@@ -1,5 +1,18 @@
 from datetime import datetime
 
+
+
+# Handle import errors gracefully - allows both package and direct imports
+try:
+    # Try direct import first (for when run as a script)
+    from src.test_with_mongo.section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+except ImportError:
+    try:
+        # Then try relative import (for when imported as a module)
+        from .section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
+    except ImportError:
+        # Fallback to non-relative import 
+        from section_reporting_template import add_section_info_to_test_results, print_violations_with_sections
 # Test metadata for documentation and reporting
 TEST_DOCUMENTATION = {
     "testName": "ARIA Landmark Analysis",
@@ -100,7 +113,32 @@ async def test_landmarks(page):
     """
     try:
         landmarks_data = await page.evaluate('''
-            () => {
+    () => {
+        // Function to generate XPath for elements
+        function getFullXPath(element) {
+            if (!element) return '';
+            
+            function getElementIdx(el) {
+                let count = 1;
+                for (let sib = el.previousSibling; sib; sib = sib.previousSibling) {
+                    if (sib.nodeType === 1 && sib.tagName === el.tagName) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            let path = '';
+            while (element && element.nodeType === 1) {
+                let idx = getElementIdx(element);
+                let tagName = element.tagName.toLowerCase();
+                path = `/${tagName}[${idx}]${path}`;
+                element = element.parentNode;
+            }
+            return path;
+        }
+        
+        {
                 function getLandmarkName(element) {
                     const ariaLabel = element.getAttribute('aria-label');
                     if (ariaLabel) return ariaLabel.trim();
@@ -263,6 +301,8 @@ async def test_landmarks(page):
                     // Check for violations
                     if (landmarkCounts[role] > 1 && !name) {
                         results.violations.push({
+
+                            xpath: getFullXPath(element),
                             type: 'duplicate-landmark-without-name',
                             role: role,
                             element: tag
@@ -276,6 +316,8 @@ async def test_landmarks(page):
                             .includes(p.role));
                         if (parentLandmarks.length > 0) {
                             results.violations.push({
+
+                                xpath: getFullXPath(element),
                                 type: 'nested-top-level-landmark',
                                 role: role,
                                 element: tag,
@@ -287,6 +329,8 @@ async def test_landmarks(page):
                     // Check for forms without labels
                     if (role === 'form' && !name) {
                         results.violations.push({
+
+                            xpath: getFullXPath(element),
                             type: 'unlabelled-form',
                             element: tag
                         });
@@ -295,6 +339,8 @@ async def test_landmarks(page):
                     // Check for sections/regions without labels
                     if (role === 'region' && !name) {
                         results.violations.push({
+
+                            xpath: getFullXPath(element),
                             type: 'unlabelled-region',
                             element: tag
                         });
@@ -365,7 +411,7 @@ async def test_landmarks(page):
                                 banner: !results.summary.hasBanner,
                                 contentinfo: !results.summary.hasContentinfo,
                                 search: !results.summary.hasSearch
-                            },
+                             },
                             contentOutsideLandmarksCount: results.contentOutsideLandmarks.length,
                             duplicateLandmarks: results.summary.duplicateLandmarks
                         }
@@ -375,13 +421,21 @@ async def test_landmarks(page):
             }
         ''')
 
+        # Add section information to results
+
+        data['results'] = add_section_info_to_test_results(page, data['results'])
+
+        # Print violations with section information for debugging
+
+        print_violations_with_sections(data['results']['violations'])
+
         return {
             'landmarks': {
                 'pageFlags': landmarks_data['pageFlags'],
                 'details': landmarks_data['results'],
                 'timestamp': datetime.now().isoformat(),
                 'documentation': TEST_DOCUMENTATION  # Include test documentation in results
-            }
+             }
         }
 
     except Exception as e:
@@ -400,7 +454,7 @@ async def test_landmarks(page):
                             'banner': True,
                             'contentinfo': True,
                             'search': True
-                        },
+                         },
                         'contentOutsideLandmarksCount': 0,
                         'duplicateLandmarks': {}
                     }
